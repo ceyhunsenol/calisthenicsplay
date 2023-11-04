@@ -1,0 +1,7 @@
+database:
+  path: ../calisthenics-test.db
+
+security:
+  jwt:
+    access-token-secret-key: "calisthenicsRootTest"
+    refresh-token-secret-key: "calisthenicsRootTest2"

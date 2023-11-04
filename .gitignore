@@ -1,0 +1,25 @@
+# GoLand specific
+.idea/
+
+# Compiled Object files, Static and Dynamic libs
+*.o
+*.a
+*.so
+
+# Compiled Go binary
+*.exe
+*.out
+*.test
+*.app
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.c.out
+
+# Test binary
+*.test
+
+# Dependency directories (remove the comment below to include it)
+vendor/
+
+# Output directories
+bin/

@@ -1,0 +1,9 @@
+database:
+  user: postgres
+  password: 0day
+  name: calisthenics
+
+security:
+  jwt:
+    access-token-secret-key: "calisthenicsRoot"
+    refresh-token-secret-key: "calisthenicsRoot2"

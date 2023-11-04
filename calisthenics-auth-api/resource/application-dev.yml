@@ -1,0 +1,4 @@
+database:
+  user: postgres
+  password: 0day
+  name: calisthenics
