@@ -103,12 +103,21 @@ func (c *GenreCacheService) GetAll() []GenreCache {
 }
 
 func (c *GenreCacheService) Remove(ID string) {
+	value, err := c.GetByID(ID)
+	if err != nil {
+		return
+	}
 	c.cacheService.Delete(c.key, fmt.Sprintf("%s:_", ID))
+	IDs := c.GetAllByType(value.Type)
+	RemoveIfExists(&IDs, ID)
+	c.cacheService.Set(c.keyType, fmt.Sprintf(":%s", value.Type), IDs)
 }
 
 func (c *GenreCacheService) RemoveAll() {
 	c.cacheService.DeleteKey(c.key)
+	c.cacheService.DeleteKey(c.keyType)
 	c.cacheService.CreateCache(c.key)
+	c.cacheService.CreateCache(c.keyType)
 }
 
 func (c *GenreCacheService) GetAllByType(genreType string) []string {
