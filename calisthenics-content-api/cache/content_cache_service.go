@@ -7,14 +7,18 @@ import (
 type ContentCacheService struct {
 	cacheService ICacheService
 	key          string
+	keyCode      string
 }
 
 func NewContentCacheService(cacheService ICacheService) *ContentCacheService {
 	key := "CONTENT"
+	keyCode := key + ":CONTENT_CODE"
 	cacheService.CreateCache(key)
+	cacheService.CreateCache(keyCode)
 	return &ContentCacheService{
 		cacheService: cacheService,
 		key:          key,
+		keyCode:      keyCode,
 	}
 }
 
@@ -24,6 +28,7 @@ func (c *ContentCacheService) Save(cache ContentCache) {
 		return
 	}
 	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.ID), cache)
+	c.cacheService.Set(c.keyCode, fmt.Sprintf(":%s", cache.CodeMultiLang.Code), cache.ID)
 }
 
 func (c *ContentCacheService) SaveAllSlice(caches []ContentCache) {
@@ -31,7 +36,6 @@ func (c *ContentCacheService) SaveAllSlice(caches []ContentCache) {
 		c.Remove(ca.ID)
 	}
 	activeCaches := make([]ContentCache, 0)
-	// ileride bağlantılı nesneler gelebilir diye sadece active içerikler alınıyor.
 	for _, value := range caches {
 		if value.Active {
 			activeCaches = append(activeCaches, value)
@@ -39,6 +43,7 @@ func (c *ContentCacheService) SaveAllSlice(caches []ContentCache) {
 	}
 	for _, value := range activeCaches {
 		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.ID), value)
+		c.cacheService.Set(c.keyCode, fmt.Sprintf(":%s", value.CodeMultiLang.Code), value.ID)
 	}
 }
 
@@ -84,10 +89,27 @@ func (c *ContentCacheService) GetAll() []ContentCache {
 }
 
 func (c *ContentCacheService) Remove(ID string) {
+	value, err := c.GetByID(ID)
+	if err != nil {
+		return
+	}
 	c.cacheService.Delete(c.key, fmt.Sprintf("%s:_", ID))
+	c.cacheService.Delete(c.keyCode, fmt.Sprintf(":%s", value.CodeMultiLang.Code))
 }
 
 func (c *ContentCacheService) RemoveAll() {
 	c.cacheService.DeleteKey(c.key)
+	c.cacheService.DeleteKey(c.keyCode)
 	c.cacheService.CreateCache(c.key)
+	c.cacheService.CreateCache(c.keyCode)
+}
+
+func (c *ContentCacheService) GetByCode(code string) (string, error) {
+	value, b := c.cacheService.Get(c.key, fmt.Sprintf(":%s", code))
+	if !b {
+		return "", fmt.Errorf("value not found with key")
+	}
+
+	cacheValue := value.(string)
+	return cacheValue, nil
 }

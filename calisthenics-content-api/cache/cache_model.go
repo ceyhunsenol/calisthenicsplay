@@ -7,14 +7,17 @@ type GenreCache struct {
 	CodeMultiLang        *MultiLangCache
 	DescriptionMultiLang *MultiLangCache
 	Active               bool
+	ContentIDs           []string
 }
 
 // ContentCache cache
 type ContentCache struct {
-	ID            string
-	CodeMultiLang *MultiLangCache
-	Description   string
-	Active        bool
+	ID                    string
+	CodeMultiLang         *MultiLangCache
+	Description           string
+	Active                bool
+	HelperContentIDs      []string
+	RequirementContentIDs []string
 }
 
 // MediaCache cache

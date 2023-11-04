@@ -4,6 +4,7 @@ go 1.21.2
 
 require (
 	github.com/go-playground/validator/v10 v10.15.5
+	github.com/google/uuid v1.1.2
 	github.com/google/wire v0.5.0
 	github.com/labstack/echo/v4 v4.11.2
 	github.com/spf13/viper v1.17.0
