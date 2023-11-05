@@ -67,3 +67,20 @@ type GenreDTO struct {
 	Description string `json:"description"`
 	Active      bool   `json:"active" validate:"required"`
 }
+
+// TranslationDTO DTO
+type TranslationDTO struct {
+	Code      string `json:"code" validate:"required"`
+	LangCode  string `json:"langCode" validate:"required"`
+	Translate string `json:"translate" validate:"required"`
+	Active    bool   `json:"active" validate:"required"`
+	Domain    string `json:"domain" validate:"required"`
+}
+
+// ContentTranslationDTO DTO
+type ContentTranslationDTO struct {
+	Code      string `json:"code"`
+	LangCode  string `json:"langCode"`
+	Translate string `json:"translate"`
+	Active    bool   `json:"active"`
+}

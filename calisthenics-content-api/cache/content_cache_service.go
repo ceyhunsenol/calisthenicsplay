@@ -4,13 +4,26 @@ import (
 	"fmt"
 )
 
+type IContentCacheService interface {
+	Save(cache ContentCache)
+	SaveAllSlice(caches []ContentCache)
+	SaveAll(caches ...ContentCache)
+	GetByID(ID string) (ContentCache, error)
+	GetAllByIDsInSlice(IDs []string) []ContentCache
+	GetAllByIDsIn(IDs ...string) []ContentCache
+	GetAll() []ContentCache
+	Remove(ID string)
+	RemoveAll()
+	GetByCode(code string) (string, error)
+}
+
 type ContentCacheService struct {
 	cacheService ICacheService
 	key          string
 	keyCode      string
 }
 
-func NewContentCacheService(cacheService ICacheService) *ContentCacheService {
+func NewContentCacheService(cacheService ICacheService) IContentCacheService {
 	key := "CONTENT"
 	keyCode := key + ":CONTENT_CODE"
 	cacheService.CreateCache(key)
@@ -105,7 +118,7 @@ func (c *ContentCacheService) RemoveAll() {
 }
 
 func (c *ContentCacheService) GetByCode(code string) (string, error) {
-	value, b := c.cacheService.Get(c.key, fmt.Sprintf(":%s", code))
+	value, b := c.cacheService.Get(c.keyCode, fmt.Sprintf(":%s", code))
 	if !b {
 		return "", fmt.Errorf("value not found with key")
 	}

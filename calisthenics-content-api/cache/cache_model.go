@@ -14,7 +14,7 @@ type GenreCache struct {
 type ContentCache struct {
 	ID                    string
 	CodeMultiLang         *MultiLangCache
-	Description           string
+	DescriptionMultiLang  *MultiLangCache
 	Active                bool
 	HelperContentIDs      []string
 	RequirementContentIDs []string
@@ -28,26 +28,4 @@ type MediaCache struct {
 	Type                 string
 	Active               bool
 	ContentID            string
-}
-
-func AddIfNotExists(IDs *[]string, element string) {
-	found := false
-	for _, id := range *IDs {
-		if id == element {
-			found = true
-			break
-		}
-	}
-	if !found {
-		*IDs = append(*IDs, element)
-	}
-}
-
-func RemoveIfExists(IDs *[]string, element string) {
-	for i, id := range *IDs {
-		if id == element {
-			*IDs = append((*IDs)[:i], (*IDs)[i+1:]...)
-			return
-		}
-	}
 }

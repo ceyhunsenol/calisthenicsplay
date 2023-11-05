@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"calisthenics-content-api/pkg"
 	"fmt"
 	"strings"
 )
@@ -30,7 +31,7 @@ func (c *MediaCacheService) Save(cache MediaCache) {
 	}
 	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.ID), cache)
 	IDs := c.GetAllByContentID(cache.ContentID, cache.Type)
-	AddIfNotExists(&IDs, cache.ID)
+	pkg.AddIfNotExists(&IDs, cache.ID)
 	c.cacheService.Set(c.keyContent, fmt.Sprintf(":%s:%s", cache.ContentID, cache.Type), IDs)
 }
 
@@ -49,7 +50,7 @@ func (c *MediaCacheService) SaveAllSlice(caches []MediaCache) {
 		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.ID), value)
 	}
 
-	grouped := GroupByField(activeCaches, func(c MediaCache) string {
+	grouped := pkg.GroupByField(activeCaches, func(c MediaCache) string {
 		return c.ContentID + ":" + c.Type
 	})
 
@@ -57,7 +58,7 @@ func (c *MediaCacheService) SaveAllSlice(caches []MediaCache) {
 		split := strings.Split(s, ":")
 		IDs := c.GetAllByContentID(split[0], split[1])
 		for _, ca := range value {
-			AddIfNotExists(&IDs, ca.ID)
+			pkg.AddIfNotExists(&IDs, ca.ID)
 		}
 		c.cacheService.Set(c.keyContent, fmt.Sprintf(":%s:%s", split[0], split[1]), IDs)
 	}
@@ -111,7 +112,7 @@ func (c *MediaCacheService) Remove(ID string) {
 	}
 	c.cacheService.Delete(c.key, fmt.Sprintf("%s:_", ID))
 	IDs := c.GetAllByContentID(value.ContentID, value.Type)
-	RemoveIfExists(&IDs, ID)
+	pkg.RemoveIfExists(&IDs, ID)
 	c.cacheService.Set(c.keyContent, fmt.Sprintf(":%s:%s", value.ContentID, value.Type), IDs)
 }
 

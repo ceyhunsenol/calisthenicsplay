@@ -10,19 +10,3 @@ type ICacheService interface {
 	Delete(key, cacheKey string)
 	DeleteKey(key string)
 }
-
-func GroupByField[T any](items []T, getField func(T) string) map[string][]T {
-	grouped := make(map[string][]T)
-
-	for _, item := range items {
-		key := getField(item)
-		group, exists := grouped[key]
-		if !exists {
-			grouped[key] = []T{item}
-		} else {
-			grouped[key] = append(group, item)
-		}
-	}
-
-	return grouped
-}

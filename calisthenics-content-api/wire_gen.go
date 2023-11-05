@@ -7,7 +7,12 @@
 package main
 
 import (
+	"calisthenics-content-api/api"
+	"calisthenics-content-api/cache"
 	"calisthenics-content-api/config"
+	"calisthenics-content-api/data/repository"
+	"calisthenics-content-api/middleware"
+	"calisthenics-content-api/service"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
@@ -20,13 +25,24 @@ import (
 // Injectors from wire.go:
 
 func InitializeApp() *echo.Echo {
-	echoEcho := InitRoutes()
+	iCacheService := cache.NewCacheManager()
+	iContentCacheService := cache.NewContentCacheService(iCacheService)
+	cacheController := api.NewCacheController(iContentCacheService)
+	echoEcho := InitRoutes(cacheController)
 	return echoEcho
 }
 
 // wire.go:
 
-var GeneralSet = wire.NewSet(NewDatabase, InitRoutes)
+var GeneralSet = wire.NewSet(NewDatabase, InitRoutes, cache.NewCacheManager)
+
+var RepositorySet = wire.NewSet(repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreRepository)
+
+var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService)
+
+var CacheServiceSet = wire.NewSet(cache.NewContentCacheService)
+
+var ControllerSet = wire.NewSet(api.NewCacheController)
 
 func NewDatabase() *gorm.DB {
 	dbUser := viper.GetString("database.user")
@@ -43,8 +59,10 @@ func NewDatabase() *gorm.DB {
 	return db
 }
 
-func InitRoutes() *echo.Echo {
+func InitRoutes(cacheController *api.CacheController) *echo.Echo {
 	e := echo.New()
+	e.Use(middleware.ServiceContextMiddleware)
+	cacheController.InitCacheRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
 	return e
 }

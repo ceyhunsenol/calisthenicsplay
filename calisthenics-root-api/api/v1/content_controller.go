@@ -57,9 +57,9 @@ func (u *ContentController) SaveContent(c echo.Context) error {
 	}
 
 	content := data.Content{
-		Code:        contentDTO.Code,
-		Description: contentDTO.Description,
-		Active:      contentDTO.Active,
+		Code:            contentDTO.Code,
+		DescriptionCode: contentDTO.Description,
+		Active:          contentDTO.Active,
 	}
 
 	_, err = u.contentService.Save(content)
@@ -88,7 +88,7 @@ func (u *ContentController) UpdateContent(c echo.Context) error {
 	}
 
 	content.Code = contentDTO.Code
-	content.Description = contentDTO.Description
+	content.DescriptionCode = contentDTO.Description
 	content.Active = contentDTO.Active
 	_, err = u.contentService.Update(*content)
 	if err != nil {
@@ -117,7 +117,7 @@ func (u *ContentController) GetContents(c echo.Context) error {
 		contentResources = append(contentResources, ContentResource{
 			ID:          content.ID,
 			Code:        content.Code,
-			Description: content.Description,
+			Description: content.DescriptionCode,
 			Active:      content.Active,
 			Medias:      mediaResources,
 		})
@@ -145,7 +145,7 @@ func (u *ContentController) GetContent(c echo.Context) error {
 	contentResource := ContentResource{
 		ID:          content.ID,
 		Code:        content.Code,
-		Description: content.Description,
+		Description: content.DescriptionCode,
 		Active:      content.Active,
 		Medias:      mediaResources,
 	}

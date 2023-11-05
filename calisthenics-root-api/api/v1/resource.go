@@ -85,5 +85,24 @@ type GenreResource struct {
 	Type        string `json:"type"`
 	Code        string `json:"code"`
 	Description string `json:"description"`
-	Active      bool   `json:"active" validate:"required"`
+	Active      bool   `json:"active"`
+}
+
+// TranslationResource Resource
+type TranslationResource struct {
+	ID        string `json:"id"`
+	Code      string `json:"code"`
+	LangCode  string `json:"langCode"`
+	Translate string `json:"translate"`
+	Active    bool   `json:"active"`
+	Domain    string `json:"domain"`
+}
+
+// ContentTranslationResource Resource
+type ContentTranslationResource struct {
+	ID        string `json:"id"`
+	Code      string `json:"code"`
+	LangCode  string `json:"langCode"`
+	Translate string `json:"translate"`
+	Active    bool   `json:"active"`
 }

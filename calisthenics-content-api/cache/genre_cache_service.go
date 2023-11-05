@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"calisthenics-content-api/pkg"
 	"fmt"
 )
 
@@ -29,7 +30,7 @@ func (c *GenreCacheService) Save(cache GenreCache) {
 	}
 	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.ID), cache)
 	IDs := c.GetAllByType(cache.Type)
-	AddIfNotExists(&IDs, cache.ID)
+	pkg.AddIfNotExists(&IDs, cache.ID)
 	c.cacheService.Set(c.keyType, fmt.Sprintf(":%s", cache.Type), IDs)
 }
 
@@ -48,14 +49,14 @@ func (c *GenreCacheService) SaveAllSlice(caches []GenreCache) {
 		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.ID), value)
 	}
 
-	grouped := GroupByField(activeCaches, func(c GenreCache) string {
+	grouped := pkg.GroupByField(activeCaches, func(c GenreCache) string {
 		return c.Type
 	})
 
 	for key, value := range grouped {
 		IDs := c.GetAllByType(key)
 		for _, ca := range value {
-			AddIfNotExists(&IDs, ca.ID)
+			pkg.AddIfNotExists(&IDs, ca.ID)
 		}
 		c.cacheService.Set(c.keyType, fmt.Sprintf(":%s", key), IDs)
 	}
@@ -109,7 +110,7 @@ func (c *GenreCacheService) Remove(ID string) {
 	}
 	c.cacheService.Delete(c.key, fmt.Sprintf("%s:_", ID))
 	IDs := c.GetAllByType(value.Type)
-	RemoveIfExists(&IDs, ID)
+	pkg.RemoveIfExists(&IDs, ID)
 	c.cacheService.Set(c.keyType, fmt.Sprintf(":%s", value.Type), IDs)
 }
 

@@ -2,11 +2,11 @@ package data
 
 type Content struct {
 	BaseModel
-	Code        string  `json:"code"`
-	Description string  `json:"description"`
-	Active      bool    `json:"active"`
-	Medias      []Media `json:"medias" gorm:"foreignKey:ContentID"`
-	Genres      []Genre `json:"genres" gorm:"many2many:genre_contents;"`
+	Code            string  `json:"code"`
+	DescriptionCode string  `json:"description"`
+	Active          bool    `json:"active"`
+	Medias          []Media `json:"medias" gorm:"foreignKey:ContentID"`
+	Genres          []Genre `json:"genres" gorm:"many2many:genre_contents;"`
 	// Bu hareketin yardımcı hareketleri
 	HelperContents []Content `gorm:"many2many:helper_contents;foreignKey:ID;joinForeignKey:ContentID;References:ID;JoinReferences:HelperContentID"`
 	// Bu hareketin gereksinim duyduğu diğer hareketler
