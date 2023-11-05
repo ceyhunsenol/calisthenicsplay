@@ -5,18 +5,27 @@ import (
 	"calisthenics-root-api/model"
 	"calisthenics-root-api/service"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 	"net/http"
 )
 
 type GenreController struct {
-	genreService           service.IGenreService
-	genreContentOperations service.IGenreContentOperations
+	genreService                 service.IGenreService
+	genreContentOperations       service.IGenreContentOperations
+	contentTranslationOperations service.IContentTranslationOperations
+	DB                           *gorm.DB
 }
 
-func NewGenreController(genreContentOperations service.IGenreContentOperations, genreService service.IGenreService) *GenreController {
+func NewGenreController(genreContentOperations service.IGenreContentOperations,
+	genreService service.IGenreService,
+	contentTranslationOperations service.IContentTranslationOperations,
+	DB *gorm.DB,
+) *GenreController {
 	return &GenreController{
-		genreService:           genreService,
-		genreContentOperations: genreContentOperations,
+		genreService:                 genreService,
+		genreContentOperations:       genreContentOperations,
+		contentTranslationOperations: contentTranslationOperations,
+		DB:                           DB,
 	}
 }
 
@@ -52,13 +61,37 @@ func (g *GenreController) SaveGenre(c echo.Context) error {
 		Type:        genreDTO.Type,
 		Code:        genreDTO.Code,
 		Description: genreDTO.Description,
+		Section:     genreDTO.Section,
 		Active:      genreDTO.Active,
 	}
 
-	_, err = g.genreService.Save(genre)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusBadRequest, Message: "Genre could not be saved."})
+	tx := g.DB.Begin()
+	if tx.Error != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Genre could not be saved."})
 	}
+	savedGenre, err := g.genreService.Save(genre)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Genre could not be saved."})
+	}
+	requests := make([]model.ContentTranslationRequest, 0)
+	for _, translation := range genreDTO.Translations {
+		request := model.ContentTranslationRequest{
+			Code:      translation.Code,
+			LangCode:  translation.LangCode,
+			Translate: translation.Translate,
+			Active:    translation.Active,
+			ContentID: savedGenre.ID,
+		}
+		requests = append(requests, request)
+	}
+	serviceError := g.contentTranslationOperations.SaveContentTranslations(requests)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+	}
+	tx.Commit()
 	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
 }
 
@@ -82,6 +115,7 @@ func (g *GenreController) UpdateGenre(c echo.Context) error {
 	genre.Type = genreDTO.Type
 	genre.Code = genreDTO.Code
 	genre.Description = genreDTO.Description
+	genre.Section = genreDTO.Section
 	genre.Active = genreDTO.Active
 	_, err = g.genreService.Update(*genre)
 	if err != nil {
@@ -103,6 +137,7 @@ func (g *GenreController) GetGenres(c echo.Context) error {
 			Type:        genre.Type,
 			Code:        genre.Code,
 			Description: genre.Description,
+			Section:     genre.Section,
 			Active:      genre.Active,
 		})
 	}
@@ -122,6 +157,7 @@ func (g *GenreController) GetGenre(c echo.Context) error {
 		Type:        genre.Type,
 		Code:        genre.Code,
 		Description: genre.Description,
+		Section:     genre.Section,
 		Active:      genre.Active,
 	}
 

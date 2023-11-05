@@ -72,39 +72,39 @@ func (cm *inMemoryCache) Get(key, cacheKey string) (interface{}, bool) {
 	return value, ok
 }
 
-func (cm *inMemoryCache) GetAll(key string) map[string]interface{} {
+func (cm *inMemoryCache) GetAll(key string) []interface{} {
 	cm.mu.RLock()
 	cacheData, ok := cm.caches[key]
 	cm.mu.RUnlock()
 
 	if !ok {
-		return make(map[string]interface{})
+		return make([]interface{}, 0)
 	}
 
 	cacheData.mu.RLock()
-	dataCopy := make(map[string]interface{})
-	for k, v := range cacheData.data {
-		dataCopy[k] = v
+	dataCopy := make([]interface{}, 0)
+	for _, v := range cacheData.data {
+		dataCopy = append(dataCopy, v)
 	}
 	cacheData.mu.RUnlock()
 
 	return dataCopy
 }
 
-func (cm *inMemoryCache) GetAllByIDIn(key string, ids []string) map[string]interface{} {
+func (cm *inMemoryCache) GetAllByIDIn(key string, ids []string) []interface{} {
 	cm.mu.RLock()
 	cacheData, ok := cm.caches[key]
 	cm.mu.RUnlock()
 
 	if !ok {
-		return make(map[string]interface{})
+		return make([]interface{}, 0)
 	}
 
 	cacheData.mu.RLock()
-	dataCopy := make(map[string]interface{})
+	dataCopy := make([]interface{}, 0)
 	for _, id := range ids {
 		if value, ok := cacheData.data[id]; ok {
-			dataCopy[id] = value
+			dataCopy = append(dataCopy, value)
 		}
 	}
 	cacheData.mu.RUnlock()

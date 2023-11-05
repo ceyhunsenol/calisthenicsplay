@@ -48,6 +48,7 @@ var ServiceSet = wire.NewSet(
 
 var ControllerSet = wire.NewSet(
 	api.NewCacheController,
+	api.NewGenreController,
 )
 
 func InitializeApp() *echo.Echo {
@@ -72,11 +73,13 @@ func NewDatabase() *gorm.DB {
 
 func InitRoutes(
 	cacheController *api.CacheController,
+	genreController *api.GenreController,
 	initCacheService service.IInitCacheService,
 ) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.ServiceContextMiddleware)
 	cacheController.InitCacheRoutes(e)
+	genreController.InitGenreRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
 	initCacheService.InitCache()
 	return e

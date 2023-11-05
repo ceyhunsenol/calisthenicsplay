@@ -26,18 +26,20 @@ type PrivilegeDTO struct {
 
 // MediaDTO DTO
 type MediaDTO struct {
-	DescriptionCode string `json:"descriptionCode"`
-	URL             string `json:"url" validate:"required"`
-	Type            string `json:"type" validate:"required"`
-	ContentID       string `json:"contentID" validate:"required"`
-	Active          bool   `json:"active" validate:"required"`
+	DescriptionCode string           `json:"descriptionCode"`
+	URL             string           `json:"url" validate:"required"`
+	Type            string           `json:"type" validate:"required"`
+	ContentID       string           `json:"contentID" validate:"required"`
+	Active          bool             `json:"active" validate:"required"`
+	Translations    []TranslationDTO `json:"translations"`
 }
 
 // ContentDTO DTO
 type ContentDTO struct {
-	Code        string `json:"code" validate:"required"`
-	Description string `json:"description"`
-	Active      bool   `json:"active" validate:"required"`
+	Code         string           `json:"code" validate:"required"`
+	Description  string           `json:"description"`
+	Active       bool             `json:"active" validate:"required"`
+	Translations []TranslationDTO `json:"translations"`
 }
 
 // HelperContentDTO DTO
@@ -62,10 +64,12 @@ type GenreTypeDTO struct {
 
 // GenreDTO DTO
 type GenreDTO struct {
-	Type        string `json:"type" validate:"required"`
-	Code        string `json:"code" validate:"required"`
-	Description string `json:"description"`
-	Active      bool   `json:"active" validate:"required"`
+	Type         string           `json:"type" validate:"required"`
+	Code         string           `json:"code" validate:"required"`
+	Description  string           `json:"description"`
+	Section      string           `json:"section"`
+	Active       bool             `json:"active" validate:"required"`
+	Translations []TranslationDTO `json:"translations"`
 }
 
 // TranslationDTO DTO

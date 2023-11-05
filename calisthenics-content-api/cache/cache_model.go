@@ -6,6 +6,7 @@ type GenreCache struct {
 	Type                 string
 	CodeMultiLang        *MultiLangCache
 	DescriptionMultiLang *MultiLangCache
+	Section              string
 	Active               bool
 	ContentIDs           []string
 }

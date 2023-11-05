@@ -2,17 +2,25 @@ package v1
 
 import (
 	"calisthenics-root-api/data"
+	"calisthenics-root-api/model"
 	"calisthenics-root-api/service"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 	"net/http"
 )
 
 type MediaController struct {
-	mediaService service.IMediaService
+	mediaService                 service.IMediaService
+	contentTranslationOperations service.IContentTranslationOperations
+	DB                           *gorm.DB
 }
 
-func NewMediaController(mediaService service.IMediaService) *MediaController {
-	return &MediaController{mediaService: mediaService}
+func NewMediaController(contentTranslationOperations service.IContentTranslationOperations, mediaService service.IMediaService, DB *gorm.DB) *MediaController {
+	return &MediaController{
+		mediaService:                 mediaService,
+		contentTranslationOperations: contentTranslationOperations,
+		DB:                           DB,
+	}
 }
 
 func (u *MediaController) InitMediaRoutes(e *echo.Group) {
@@ -40,10 +48,33 @@ func (u *MediaController) SaveMedia(c echo.Context) error {
 		Active:          mediaDTO.Active,
 	}
 
-	_, err := u.mediaService.Save(media)
-	if err != nil {
+	tx := u.DB.Begin()
+	if tx.Error != nil {
+		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Media could not be saved."})
 	}
+	savedMedia, err := u.mediaService.Save(media)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Media could not be saved."})
+	}
+	requests := make([]model.ContentTranslationRequest, 0)
+	for _, translation := range mediaDTO.Translations {
+		request := model.ContentTranslationRequest{
+			Code:      translation.Code,
+			LangCode:  translation.LangCode,
+			Translate: translation.Translate,
+			Active:    translation.Active,
+			ContentID: savedMedia.ID,
+		}
+		requests = append(requests, request)
+	}
+	serviceError := u.contentTranslationOperations.SaveContentTranslations(requests)
+	if serviceError != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Media could not be saved."})
+	}
+	tx.Commit()
 	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
 }
 

@@ -46,7 +46,7 @@ func (g *GenreTypeController) SaveGenreType(c echo.Context) error {
 
 	_, err = g.genreTypeService.Save(genreType)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusBadRequest, Message: "GenreType could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "GenreType could not be saved."})
 	}
 	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
 }

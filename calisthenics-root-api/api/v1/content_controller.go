@@ -5,6 +5,7 @@ import (
 	"calisthenics-root-api/model"
 	"calisthenics-root-api/service"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -12,16 +13,22 @@ type ContentController struct {
 	contentService               service.IContentService
 	helperContentOperations      service.IHelperContentOperations
 	requirementContentOperations service.IRequirementContentOperations
+	contentTranslationOperations service.IContentTranslationOperations
+	DB                           *gorm.DB
 }
 
 func NewContentController(contentService service.IContentService,
 	helperContentOperations service.IHelperContentOperations,
 	requirementContentOperations service.IRequirementContentOperations,
+	contentTranslationOperations service.IContentTranslationOperations,
+	DB *gorm.DB,
 ) *ContentController {
 	return &ContentController{
 		contentService:               contentService,
 		helperContentOperations:      helperContentOperations,
 		requirementContentOperations: requirementContentOperations,
+		contentTranslationOperations: contentTranslationOperations,
+		DB:                           DB,
 	}
 }
 
@@ -50,10 +57,10 @@ func (u *ContentController) SaveContent(c echo.Context) error {
 
 	exists, err := u.contentService.ExistsByCode(contentDTO.Code)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Privilege could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be saved."})
 	}
 	if exists {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Privilege already exists in this code."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Content already exists in this code."})
 	}
 
 	content := data.Content{
@@ -62,10 +69,33 @@ func (u *ContentController) SaveContent(c echo.Context) error {
 		Active:          contentDTO.Active,
 	}
 
-	_, err = u.contentService.Save(content)
-	if err != nil {
+	tx := u.DB.Begin()
+	if tx.Error != nil {
+		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be saved."})
 	}
+	_, err = u.contentService.Save(content)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be saved."})
+	}
+	requests := make([]model.ContentTranslationRequest, 0)
+	for _, translation := range contentDTO.Translations {
+		request := model.ContentTranslationRequest{
+			Code:      translation.Code,
+			LangCode:  translation.LangCode,
+			Translate: translation.Translate,
+			Active:    translation.Active,
+			ContentID: content.ID,
+		}
+		requests = append(requests, request)
+	}
+	serviceError := u.contentTranslationOperations.SaveContentTranslations(requests)
+	if serviceError != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be saved."})
+	}
+	tx.Commit()
 	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
 }
 

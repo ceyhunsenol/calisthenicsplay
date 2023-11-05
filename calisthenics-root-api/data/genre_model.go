@@ -11,6 +11,7 @@ type Genre struct {
 	Code        string    `json:"code"`
 	Description string    `json:"description"`
 	Active      bool      `json:"active"`
+	Section     string    `json:"section"`
 	Contents    []Content `json:"contents" gorm:"many2many:genre_content;"`
 }
 

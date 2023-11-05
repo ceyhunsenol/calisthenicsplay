@@ -9,6 +9,7 @@ import (
 type IGenreOperations interface {
 	SaveCacheGenres() error
 	SaveCacheGenre(ID string) (cache.GenreCache, error)
+	GetGenres(request model.GenreRequest) []model.GenreModel
 }
 
 type genreOperations struct {
@@ -33,6 +34,8 @@ func (o *genreOperations) SaveCacheGenres() error {
 		if value.Active {
 			contentCache := cache.GenreCache{
 				ID:                   value.ID,
+				Type:                 value.Type,
+				Section:              value.Section,
 				CodeMultiLang:        nil,
 				DescriptionMultiLang: nil,
 				Active:               true,
@@ -54,8 +57,30 @@ func (o *genreOperations) SaveCacheGenre(ID string) (cache.GenreCache, error) {
 		ID:                   genre.ID,
 		CodeMultiLang:        nil,
 		DescriptionMultiLang: nil,
+		Type:                 genre.Type,
 		Active:               true,
 	}
 	o.genreCacheService.Save(genreCache)
 	return genreCache, nil
+}
+
+func (o *genreOperations) GetGenres(request model.GenreRequest) []model.GenreModel {
+	genreIDs := o.genreCacheService.GetAllByType(request.Type)
+	genreCaches := o.genreCacheService.GetAllByIDsInSlice(genreIDs)
+	models := make([]model.GenreModel, 0)
+	for _, c := range genreCaches {
+		if c.Section == request.Section {
+			genreModel := model.GenreModel{
+				ID:          c.ID,
+				Type:        c.Type,
+				Code:        "",
+				Description: "",
+				Section:     c.Section,
+				Active:      true,
+				Contents:    nil,
+			}
+			models = append(models, genreModel)
+		}
+	}
+	return models
 }

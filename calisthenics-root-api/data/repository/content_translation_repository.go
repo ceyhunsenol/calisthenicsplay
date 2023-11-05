@@ -14,6 +14,7 @@ type IContentTranslationRepository interface {
 	GetAllByCode(code string) ([]data.ContentTranslation, error)
 	Update(translation data.ContentTranslation) (*data.ContentTranslation, error)
 	Delete(id string) error
+	DeleteAllByContentID(contentID string) error
 }
 
 type contentTranslationRepository struct {
@@ -71,4 +72,8 @@ func (r *contentTranslationRepository) Update(translation data.ContentTranslatio
 
 func (r *contentTranslationRepository) Delete(id string) error {
 	return r.DB.Delete(&data.ContentTranslation{}, "id = ?", id).Error
+}
+
+func (r *contentTranslationRepository) DeleteAllByContentID(contentID string) error {
+	return r.DB.Delete(&data.ContentTranslation{}, "content_id = ?", contentID).Error
 }

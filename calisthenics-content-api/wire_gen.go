@@ -40,8 +40,9 @@ func InitializeApp() *echo.Echo {
 	iGenreCacheService := cache.NewGenreCacheService(iCacheService)
 	iGenreOperations := service.NewGenreOperations(iGenreService, iGenreCacheService)
 	cacheController := api.NewCacheController(iMediaOperations, iContentOperations, iGenreOperations)
+	genreController := api.NewGenreController(iGenreOperations)
 	iInitCacheService := service.NewInitCacheService(iContentOperations, iGenreOperations, iMediaOperations)
-	echoEcho := InitRoutes(cacheController, iInitCacheService)
+	echoEcho := InitRoutes(cacheController, genreController, iInitCacheService)
 	return echoEcho
 }
 
@@ -57,7 +58,7 @@ var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCa
 
 var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations)
 
-var ControllerSet = wire.NewSet(api.NewCacheController)
+var ControllerSet = wire.NewSet(api.NewCacheController, api.NewGenreController)
 
 func NewDatabase() *gorm.DB {
 	dbUser := viper.GetString("database.user")
@@ -76,11 +77,13 @@ func NewDatabase() *gorm.DB {
 
 func InitRoutes(
 	cacheController *api.CacheController,
+	genreController *api.GenreController,
 	initCacheService service.IInitCacheService,
 ) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.ServiceContextMiddleware)
 	cacheController.InitCacheRoutes(e)
+	genreController.InitGenreRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
 	initCacheService.InitCache()
 	return e
