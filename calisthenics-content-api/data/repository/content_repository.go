@@ -33,6 +33,6 @@ func (r *contentRepository) GetByID(id string) (*data.Content, error) {
 
 func (r *contentRepository) GetByCode(code string) (*data.Content, error) {
 	var content data.Content
-	result := r.DB.Where("code = ?", code).Preload("Medias").First(&content)
+	result := r.DB.Where("code = ?", code).Preload("Translations").Find(&content)
 	return &content, result.Error
 }

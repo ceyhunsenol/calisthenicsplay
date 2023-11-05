@@ -5,25 +5,38 @@ import (
 	"fmt"
 )
 
-type GenreCacheService struct {
+type IGenreCacheService interface {
+	Save(cache GenreCache)
+	SaveAllSlice(caches []GenreCache)
+	SaveAll(caches ...GenreCache)
+	GetByID(ID string) (GenreCache, error)
+	GetAllByIDsInSlice(IDs []string) []GenreCache
+	GetAllByIDsIn(IDs ...string) []GenreCache
+	GetAll() []GenreCache
+	Remove(ID string)
+	RemoveAll()
+	GetAllByType(genreType string) []string
+}
+
+type genreCacheService struct {
 	cacheService ICacheService
 	key          string
 	keyType      string
 }
 
-func NewGenreCacheService(cacheService ICacheService) *GenreCacheService {
+func NewGenreCacheService(cacheService ICacheService) IGenreCacheService {
 	key := "GENRE"
 	keyType := key + ":TYPE"
 	cacheService.CreateCache(key)
 	cacheService.CreateCache(keyType)
-	return &GenreCacheService{
+	return &genreCacheService{
 		cacheService: cacheService,
 		key:          key,
 		keyType:      keyType,
 	}
 }
 
-func (c *GenreCacheService) Save(cache GenreCache) {
+func (c *genreCacheService) Save(cache GenreCache) {
 	c.Remove(cache.ID)
 	if !cache.Active {
 		return
@@ -34,7 +47,7 @@ func (c *GenreCacheService) Save(cache GenreCache) {
 	c.cacheService.Set(c.keyType, fmt.Sprintf(":%s", cache.Type), IDs)
 }
 
-func (c *GenreCacheService) SaveAllSlice(caches []GenreCache) {
+func (c *genreCacheService) SaveAllSlice(caches []GenreCache) {
 	for _, value := range caches {
 		c.Remove(value.ID)
 	}
@@ -62,11 +75,11 @@ func (c *GenreCacheService) SaveAllSlice(caches []GenreCache) {
 	}
 }
 
-func (c *GenreCacheService) SaveAll(caches ...GenreCache) {
+func (c *genreCacheService) SaveAll(caches ...GenreCache) {
 	c.SaveAllSlice(caches)
 }
 
-func (c *GenreCacheService) GetByID(ID string) (GenreCache, error) {
+func (c *genreCacheService) GetByID(ID string) (GenreCache, error) {
 	value, b := c.cacheService.Get(c.key, fmt.Sprintf("%s:_", ID))
 	if !b {
 		return GenreCache{}, fmt.Errorf("value not found with key")
@@ -76,7 +89,7 @@ func (c *GenreCacheService) GetByID(ID string) (GenreCache, error) {
 	return cacheValue, nil
 }
 
-func (c *GenreCacheService) GetAllByIDsInSlice(IDs []string) []GenreCache {
+func (c *genreCacheService) GetAllByIDsInSlice(IDs []string) []GenreCache {
 	keys := make([]string, 0)
 	for _, ID := range IDs {
 		keys = append(keys, fmt.Sprintf("%s:_", ID))
@@ -90,11 +103,11 @@ func (c *GenreCacheService) GetAllByIDsInSlice(IDs []string) []GenreCache {
 	return cacheValues
 }
 
-func (c *GenreCacheService) GetAllByIDsIn(IDs ...string) []GenreCache {
+func (c *genreCacheService) GetAllByIDsIn(IDs ...string) []GenreCache {
 	return c.GetAllByIDsInSlice(IDs)
 }
 
-func (c *GenreCacheService) GetAll() []GenreCache {
+func (c *genreCacheService) GetAll() []GenreCache {
 	values := c.cacheService.GetAll(c.key)
 	cacheValues := make([]GenreCache, 0)
 	for _, value := range values {
@@ -103,7 +116,7 @@ func (c *GenreCacheService) GetAll() []GenreCache {
 	return cacheValues
 }
 
-func (c *GenreCacheService) Remove(ID string) {
+func (c *genreCacheService) Remove(ID string) {
 	value, err := c.GetByID(ID)
 	if err != nil {
 		return
@@ -114,14 +127,14 @@ func (c *GenreCacheService) Remove(ID string) {
 	c.cacheService.Set(c.keyType, fmt.Sprintf(":%s", value.Type), IDs)
 }
 
-func (c *GenreCacheService) RemoveAll() {
+func (c *genreCacheService) RemoveAll() {
 	c.cacheService.DeleteKey(c.key)
 	c.cacheService.DeleteKey(c.keyType)
 	c.cacheService.CreateCache(c.key)
 	c.cacheService.CreateCache(c.keyType)
 }
 
-func (c *GenreCacheService) GetAllByType(genreType string) []string {
+func (c *genreCacheService) GetAllByType(genreType string) []string {
 	value, b := c.cacheService.Get(c.keyType, fmt.Sprintf(":%s", genreType))
 	if !b {
 		return make([]string, 0)

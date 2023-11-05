@@ -7,14 +7,16 @@ import (
 )
 
 type IContentOperations interface {
+	SaveCacheContents() error
+	SaveCacheContent(ID string) (cache.ContentCache, error)
 }
 
 type contentOperations struct {
 	contentService      IContentService
-	contentCacheService cache.ContentCacheService
+	contentCacheService cache.IContentCacheService
 }
 
-func NewContentOperations(contentService IContentService, contentCacheService cache.ContentCacheService) IContentOperations {
+func NewContentOperations(contentService IContentService, contentCacheService cache.IContentCacheService) IContentOperations {
 	return &contentOperations{
 		contentService:      contentService,
 		contentCacheService: contentCacheService,
@@ -45,10 +47,19 @@ func (o *contentOperations) SaveCacheContents() error {
 	return nil
 }
 
-func (o *contentOperations) SaveCacheContent(ID string) (*cache.ContentCache, error) {
-	_, err := o.contentService.GetByID(ID)
+func (o *contentOperations) SaveCacheContent(ID string) (cache.ContentCache, error) {
+	content, err := o.contentService.GetByID(ID)
 	if err != nil {
-		return nil, &model.ServiceError{Code: http.StatusInternalServerError, Message: "General error"}
+		return cache.ContentCache{}, &model.ServiceError{Code: http.StatusInternalServerError, Message: "General error"}
 	}
-	return nil, nil
+	contentCache := cache.ContentCache{
+		ID:                    content.ID,
+		CodeMultiLang:         nil,
+		DescriptionMultiLang:  nil,
+		Active:                true,
+		HelperContentIDs:      nil,
+		RequirementContentIDs: nil,
+	}
+	o.contentCacheService.Save(contentCache)
+	return contentCache, nil
 }

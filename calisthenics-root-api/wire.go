@@ -32,6 +32,8 @@ var RepositorySet = wire.NewSet(
 	repository.NewHelperContentRepository,
 	repository.NewRequirementContentRepository,
 	repository.NewGenreContentRepository,
+	repository.NewTranslationRepository,
+	repository.NewContentTranslationRepository,
 )
 
 var DomainServiceSet = wire.NewSet(
@@ -45,6 +47,8 @@ var DomainServiceSet = wire.NewSet(
 	service.NewGenreTypeService,
 	service.NewGenreService,
 	service.NewGenreContentService,
+	service.NewTranslationService,
+	service.NewContentTranslationService,
 )
 
 var ServiceSet = wire.NewSet(
@@ -63,6 +67,8 @@ var ControllerSet = wire.NewSet(
 	v1.NewMediaController,
 	v1.NewGenreTypeController,
 	v1.NewGenreController,
+	v1.NewTranslationController,
+	v1.NewContentTranslationController,
 )
 
 func InitializeApp() *echo.Echo {
@@ -78,7 +84,7 @@ func NewDatabase() *gorm.DB {
 	if err != nil {
 		panic("Failed to connect to the database")
 	}
-	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{})
+	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{}, &data.Translation{}, &data.ContentTranslation{})
 	if err != nil {
 		panic("Failed to migrate database")
 	}
@@ -94,6 +100,8 @@ func InitRoutes(
 	mediaController *v1.MediaController,
 	genreTypeController *v1.GenreTypeController,
 	genreController *v1.GenreController,
+	translationController *v1.TranslationController,
+	contentTanslationController *v1.ContentTranslationController,
 	userService service.IUserService) *echo.Echo {
 
 	e := echo.New()
@@ -122,6 +130,12 @@ func InitRoutes(
 
 	middlewareGroup = e.Group("/v1/genres", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
 	genreController.InitGenreRoutes(middlewareGroup)
+
+	middlewareGroup = e.Group("/v1/translations", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	translationController.InitTranslationRoutes(middlewareGroup)
+
+	middlewareGroup = e.Group("/v1/content-translations", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	contentTanslationController.InitContentTranslationRoutes(middlewareGroup)
 
 	return e
 }

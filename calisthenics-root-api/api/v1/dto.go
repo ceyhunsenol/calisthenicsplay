@@ -83,4 +83,5 @@ type ContentTranslationDTO struct {
 	LangCode  string `json:"langCode"`
 	Translate string `json:"translate"`
 	Active    bool   `json:"active"`
+	ContentID string `json:"contentID"`
 }

@@ -58,7 +58,13 @@ func InitializeApp() *echo.Echo {
 	iGenreContentService := service.NewGenreContentService(iGenreContentRepository)
 	iGenreContentOperations := service.NewGenreContentOperations(iGenreService, iGenreContentService, iContentService)
 	genreController := v1.NewGenreController(iGenreContentOperations, iGenreService)
-	echoEcho := InitRoutes(authController, userController, roleController, privilegeController, contentController, mediaController, genreTypeController, genreController, iUserService)
+	iTranslationRepository := repository.NewTranslationRepository(db)
+	iTranslationService := service.NewTranslationService(iTranslationRepository)
+	translationController := v1.NewTranslationController(iTranslationService)
+	iContentTranslationRepository := repository.NewContentTranslationRepository(db)
+	iContentTranslationService := service.NewContentTranslationService(iContentTranslationRepository)
+	contentTranslationController := v1.NewContentTranslationController(iContentTranslationService)
+	echoEcho := InitRoutes(authController, userController, roleController, privilegeController, contentController, mediaController, genreTypeController, genreController, translationController, contentTranslationController, iUserService)
 	return echoEcho
 }
 
@@ -66,13 +72,13 @@ func InitializeApp() *echo.Echo {
 
 var GeneralSet = wire.NewSet(NewDatabase, InitRoutes)
 
-var RepositorySet = wire.NewSet(repository.NewUserRepository, repository.NewPrivilegeRepository, repository.NewRoleRepository, repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreTypeRepository, repository.NewGenreRepository, repository.NewHelperContentRepository, repository.NewRequirementContentRepository, repository.NewGenreContentRepository)
+var RepositorySet = wire.NewSet(repository.NewUserRepository, repository.NewPrivilegeRepository, repository.NewRoleRepository, repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreTypeRepository, repository.NewGenreRepository, repository.NewHelperContentRepository, repository.NewRequirementContentRepository, repository.NewGenreContentRepository, repository.NewTranslationRepository, repository.NewContentTranslationRepository)
 
-var DomainServiceSet = wire.NewSet(service.NewUserService, service.NewPrivilegeService, service.NewRoleService, service.NewContentService, service.NewMediaService, service.NewHelperContentService, service.NewRequirementContentService, service.NewGenreTypeService, service.NewGenreService, service.NewGenreContentService)
+var DomainServiceSet = wire.NewSet(service.NewUserService, service.NewPrivilegeService, service.NewRoleService, service.NewContentService, service.NewMediaService, service.NewHelperContentService, service.NewRequirementContentService, service.NewGenreTypeService, service.NewGenreService, service.NewGenreContentService, service.NewTranslationService, service.NewContentTranslationService)
 
 var ServiceSet = wire.NewSet(service.NewAuthService, service.NewHelperContentOperations, service.NewRequirementContentOperations, service.NewGenreContentOperations)
 
-var ControllerSet = wire.NewSet(v1.NewAuthController, v1.NewUserController, v1.NewRoleController, v1.NewPrivilegeController, v1.NewContentController, v1.NewMediaController, v1.NewGenreTypeController, v1.NewGenreController)
+var ControllerSet = wire.NewSet(v1.NewAuthController, v1.NewUserController, v1.NewRoleController, v1.NewPrivilegeController, v1.NewContentController, v1.NewMediaController, v1.NewGenreTypeController, v1.NewGenreController, v1.NewTranslationController, v1.NewContentTranslationController)
 
 func NewDatabase() *gorm.DB {
 	dbUser := viper.GetString("database.user")
@@ -82,7 +88,7 @@ func NewDatabase() *gorm.DB {
 	if err != nil {
 		panic("Failed to connect to the database")
 	}
-	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{})
+	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{}, &data.Translation{}, &data.ContentTranslation{})
 	if err != nil {
 		panic("Failed to migrate database")
 	}
@@ -98,6 +104,8 @@ func InitRoutes(
 	mediaController *v1.MediaController,
 	genreTypeController *v1.GenreTypeController,
 	genreController *v1.GenreController,
+	translationController *v1.TranslationController,
+	contentTanslationController *v1.ContentTranslationController,
 	userService service.IUserService) *echo.Echo {
 
 	e := echo.New()
@@ -126,6 +134,12 @@ func InitRoutes(
 
 	middlewareGroup = e.Group("/v1/genres", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
 	genreController.InitGenreRoutes(middlewareGroup)
+
+	middlewareGroup = e.Group("/v1/translations", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	translationController.InitTranslationRoutes(middlewareGroup)
+
+	middlewareGroup = e.Group("/v1/content-translations", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	contentTanslationController.InitContentTranslationRoutes(middlewareGroup)
 
 	return e
 }

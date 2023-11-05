@@ -6,7 +6,7 @@ import (
 )
 
 type IMediaService interface {
-	GetAll() ([]data.Media, error)
+	GetAll() ([]*data.Media, error)
 	GetByID(id string) (*data.Media, error)
 }
 
@@ -18,7 +18,7 @@ func NewMediaService(mediaRepo repository.IMediaRepository) IMediaService {
 	return &mediaService{mediaRepository: mediaRepo}
 }
 
-func (s *mediaService) GetAll() ([]data.Media, error) {
+func (s *mediaService) GetAll() ([]*data.Media, error) {
 	return s.mediaRepository.GetAll()
 }
 

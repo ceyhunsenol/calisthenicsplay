@@ -6,25 +6,38 @@ import (
 	"strings"
 )
 
-type MediaCacheService struct {
+type IMediaCacheService interface {
+	Save(cache MediaCache)
+	SaveAllSlice(caches []MediaCache)
+	SaveAll(caches ...MediaCache)
+	GetByID(ID string) (MediaCache, error)
+	GetAllByIDsInSlice(IDs []string) []MediaCache
+	GetAllByIDsIn(IDs ...string) []MediaCache
+	GetAll() []MediaCache
+	Remove(ID string)
+	RemoveAll()
+	GetAllByContentID(contentID, videoType string) []string
+}
+
+type mediaCacheService struct {
 	cacheService ICacheService
 	key          string
 	keyContent   string
 }
 
-func NewMediaCacheService(cacheService ICacheService) *MediaCacheService {
+func NewMediaCacheService(cacheService ICacheService) IMediaCacheService {
 	key := "MEDIA"
 	keyContent := key + ":CONTENT_ID"
 	cacheService.CreateCache(key)
 	cacheService.CreateCache(keyContent)
-	return &MediaCacheService{
+	return &mediaCacheService{
 		cacheService: cacheService,
 		key:          key,
 		keyContent:   keyContent,
 	}
 }
 
-func (c *MediaCacheService) Save(cache MediaCache) {
+func (c *mediaCacheService) Save(cache MediaCache) {
 	c.Remove(cache.ID)
 	if !cache.Active {
 		return
@@ -35,7 +48,7 @@ func (c *MediaCacheService) Save(cache MediaCache) {
 	c.cacheService.Set(c.keyContent, fmt.Sprintf(":%s:%s", cache.ContentID, cache.Type), IDs)
 }
 
-func (c *MediaCacheService) SaveAllSlice(caches []MediaCache) {
+func (c *mediaCacheService) SaveAllSlice(caches []MediaCache) {
 	for _, value := range caches {
 		c.Remove(value.ID)
 	}
@@ -64,11 +77,11 @@ func (c *MediaCacheService) SaveAllSlice(caches []MediaCache) {
 	}
 }
 
-func (c *MediaCacheService) SaveAll(caches ...MediaCache) {
+func (c *mediaCacheService) SaveAll(caches ...MediaCache) {
 	c.SaveAllSlice(caches)
 }
 
-func (c *MediaCacheService) GetByID(ID string) (MediaCache, error) {
+func (c *mediaCacheService) GetByID(ID string) (MediaCache, error) {
 	value, b := c.cacheService.Get(c.key, fmt.Sprintf("%s:_", ID))
 	if !b {
 		return MediaCache{}, fmt.Errorf("value not found with key")
@@ -78,7 +91,7 @@ func (c *MediaCacheService) GetByID(ID string) (MediaCache, error) {
 	return cacheValue, nil
 }
 
-func (c *MediaCacheService) GetAllByIDsInSlice(IDs []string) []MediaCache {
+func (c *mediaCacheService) GetAllByIDsInSlice(IDs []string) []MediaCache {
 	keys := make([]string, 0)
 	for _, ID := range IDs {
 		keys = append(keys, fmt.Sprintf("%s:_", ID))
@@ -92,11 +105,11 @@ func (c *MediaCacheService) GetAllByIDsInSlice(IDs []string) []MediaCache {
 	return cacheValues
 }
 
-func (c *MediaCacheService) GetAllByIDsIn(IDs ...string) []MediaCache {
+func (c *mediaCacheService) GetAllByIDsIn(IDs ...string) []MediaCache {
 	return c.GetAllByIDsInSlice(IDs)
 }
 
-func (c *MediaCacheService) GetAll() []MediaCache {
+func (c *mediaCacheService) GetAll() []MediaCache {
 	values := c.cacheService.GetAll(c.key)
 	cacheValues := make([]MediaCache, 0)
 	for _, value := range values {
@@ -105,7 +118,7 @@ func (c *MediaCacheService) GetAll() []MediaCache {
 	return cacheValues
 }
 
-func (c *MediaCacheService) Remove(ID string) {
+func (c *mediaCacheService) Remove(ID string) {
 	value, err := c.GetByID(ID)
 	if err != nil {
 		return
@@ -116,14 +129,14 @@ func (c *MediaCacheService) Remove(ID string) {
 	c.cacheService.Set(c.keyContent, fmt.Sprintf(":%s:%s", value.ContentID, value.Type), IDs)
 }
 
-func (c *MediaCacheService) RemoveAll() {
+func (c *mediaCacheService) RemoveAll() {
 	c.cacheService.DeleteKey(c.key)
 	c.cacheService.DeleteKey(c.keyContent)
 	c.cacheService.CreateCache(c.key)
 	c.cacheService.CreateCache(c.keyContent)
 }
 
-func (c *MediaCacheService) GetAllByContentID(contentID, videoType string) []string {
+func (c *mediaCacheService) GetAllByContentID(contentID, videoType string) []string {
 	value, b := c.cacheService.Get(c.keyContent, fmt.Sprintf(":%s:%s", contentID, videoType))
 	if !b {
 		return make([]string, 0)

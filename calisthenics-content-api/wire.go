@@ -31,12 +31,19 @@ var DomainServiceSet = wire.NewSet(
 	service.NewContentService,
 	service.NewMediaService,
 	service.NewGenreService,
+	service.NewInitCacheService,
 )
 
 var CacheServiceSet = wire.NewSet(
-	//cache.NewMediaCacheService,
+	cache.NewMediaCacheService,
 	cache.NewContentCacheService,
-	//cache.NewGenreCacheService,
+	cache.NewGenreCacheService,
+)
+
+var ServiceSet = wire.NewSet(
+	service.NewMediaOperations,
+	service.NewContentOperations,
+	service.NewGenreOperations,
 )
 
 var ControllerSet = wire.NewSet(
@@ -44,7 +51,7 @@ var ControllerSet = wire.NewSet(
 )
 
 func InitializeApp() *echo.Echo {
-	wire.Build(GeneralSet, CacheServiceSet, ControllerSet)
+	wire.Build(GeneralSet, RepositorySet, DomainServiceSet, CacheServiceSet, ServiceSet, ControllerSet)
 	return &echo.Echo{}
 }
 
@@ -63,10 +70,14 @@ func NewDatabase() *gorm.DB {
 	return db
 }
 
-func InitRoutes(cacheController *api.CacheController) *echo.Echo {
+func InitRoutes(
+	cacheController *api.CacheController,
+	initCacheService service.IInitCacheService,
+) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.ServiceContextMiddleware)
 	cacheController.InitCacheRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
+	initCacheService.InitCache()
 	return e
 }

@@ -25,10 +25,23 @@ import (
 // Injectors from wire.go:
 
 func InitializeApp() *echo.Echo {
+	db := NewDatabase()
+	iMediaRepository := repository.NewMediaRepository(db)
+	iMediaService := service.NewMediaService(iMediaRepository)
 	iCacheService := cache.NewCacheManager()
+	iMediaCacheService := cache.NewMediaCacheService(iCacheService)
+	iContentRepository := repository.NewContentRepository(db)
+	iContentService := service.NewContentService(iContentRepository)
+	iMediaOperations := service.NewMediaOperations(iMediaService, iMediaCacheService, iContentService)
 	iContentCacheService := cache.NewContentCacheService(iCacheService)
-	cacheController := api.NewCacheController(iContentCacheService)
-	echoEcho := InitRoutes(cacheController)
+	iContentOperations := service.NewContentOperations(iContentService, iContentCacheService)
+	iGenreRepository := repository.NewGenreRepository(db)
+	iGenreService := service.NewGenreService(iGenreRepository)
+	iGenreCacheService := cache.NewGenreCacheService(iCacheService)
+	iGenreOperations := service.NewGenreOperations(iGenreService, iGenreCacheService)
+	cacheController := api.NewCacheController(iMediaOperations, iContentOperations, iGenreOperations)
+	iInitCacheService := service.NewInitCacheService(iContentOperations, iGenreOperations, iMediaOperations)
+	echoEcho := InitRoutes(cacheController, iInitCacheService)
 	return echoEcho
 }
 
@@ -38,9 +51,11 @@ var GeneralSet = wire.NewSet(NewDatabase, InitRoutes, cache.NewCacheManager)
 
 var RepositorySet = wire.NewSet(repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreRepository)
 
-var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService)
+var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService, service.NewInitCacheService)
 
-var CacheServiceSet = wire.NewSet(cache.NewContentCacheService)
+var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCacheService, cache.NewGenreCacheService)
+
+var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations)
 
 var ControllerSet = wire.NewSet(api.NewCacheController)
 
@@ -59,10 +74,14 @@ func NewDatabase() *gorm.DB {
 	return db
 }
 
-func InitRoutes(cacheController *api.CacheController) *echo.Echo {
+func InitRoutes(
+	cacheController *api.CacheController,
+	initCacheService service.IInitCacheService,
+) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.ServiceContextMiddleware)
 	cacheController.InitCacheRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
+	initCacheService.InitCache()
 	return e
 }
