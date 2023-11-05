@@ -79,7 +79,7 @@ func (t *TranslationController) UpdateTranslation(c echo.Context) error {
 	translation.Domain = translationDTO.Domain
 	_, err = t.translationService.Update(*translation)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Translation could not be updated."})
 	}
 	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
 }

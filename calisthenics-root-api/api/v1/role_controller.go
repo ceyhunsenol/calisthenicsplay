@@ -76,7 +76,7 @@ func (u *RoleController) UpdateRole(c echo.Context) error {
 	role.Code = roleDTO.Code
 	_, err = u.roleService.Update(*role)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Role could not be updated."})
 	}
 	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
 }

@@ -93,7 +93,7 @@ func (u *ContentController) SaveContent(c echo.Context) error {
 	serviceError := u.contentTranslationOperations.SaveContentTranslations(requests)
 	if serviceError != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be saved."})
+		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
 	}
 	tx.Commit()
 	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
@@ -120,10 +120,34 @@ func (u *ContentController) UpdateContent(c echo.Context) error {
 	content.Code = contentDTO.Code
 	content.DescriptionCode = contentDTO.Description
 	content.Active = contentDTO.Active
+
+	tx := u.DB.Begin()
+	if tx.Error != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be updated."})
+	}
 	_, err = u.contentService.Update(*content)
 	if err != nil {
-		return err
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be updated."})
 	}
+	requests := make([]model.ContentTranslationRequest, 0)
+	for _, translation := range contentDTO.Translations {
+		request := model.ContentTranslationRequest{
+			Code:      translation.Code,
+			LangCode:  translation.LangCode,
+			Translate: translation.Translate,
+			Active:    translation.Active,
+			ContentID: content.ID,
+		}
+		requests = append(requests, request)
+	}
+	serviceError := u.contentTranslationOperations.SaveContentTranslations(requests)
+	if serviceError != nil {
+		tx.Rollback()
+		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+	}
+	tx.Commit()
 	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
 }
 

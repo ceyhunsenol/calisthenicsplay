@@ -75,7 +75,7 @@ func (u *PrivilegeController) UpdatePrivilege(c echo.Context) error {
 	role.EndpointsJoin = roleDTO.EndpointsJoin
 	_, err = u.privilegeService.Update(*role)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Privilege could not be updated."})
 	}
 	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
 }

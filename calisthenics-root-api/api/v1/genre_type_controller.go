@@ -71,7 +71,7 @@ func (g *GenreTypeController) UpdateGenreType(c echo.Context) error {
 	genreType.Code = genreTypeDTO.Code
 	_, err = g.genreTypeService.Update(*genreType)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "GenreTypes could not be updated."})
 	}
 	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
 }

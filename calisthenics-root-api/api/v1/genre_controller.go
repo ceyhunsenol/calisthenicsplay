@@ -89,7 +89,7 @@ func (g *GenreController) SaveGenre(c echo.Context) error {
 	serviceError := g.contentTranslationOperations.SaveContentTranslations(requests)
 	if err != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
 	}
 	tx.Commit()
 	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
@@ -117,10 +117,33 @@ func (g *GenreController) UpdateGenre(c echo.Context) error {
 	genre.Description = genreDTO.Description
 	genre.Section = genreDTO.Section
 	genre.Active = genreDTO.Active
+	tx := g.DB.Begin()
+	if tx.Error != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Genre could not be saved."})
+	}
 	_, err = g.genreService.Update(*genre)
 	if err != nil {
-		return err
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Genre could not be updated."})
 	}
+	requests := make([]model.ContentTranslationRequest, 0)
+	for _, translation := range genreDTO.Translations {
+		request := model.ContentTranslationRequest{
+			Code:      translation.Code,
+			LangCode:  translation.LangCode,
+			Translate: translation.Translate,
+			Active:    translation.Active,
+			ContentID: genre.ID,
+		}
+		requests = append(requests, request)
+	}
+	serviceError := g.contentTranslationOperations.SaveContentTranslations(requests)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+	}
+	tx.Commit()
 	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
 }
 

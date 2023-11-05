@@ -79,7 +79,7 @@ func (c *ContentTranslationController) UpdateContentTranslation(ctx echo.Context
 	contentTranslation.ContentID = contentTranslationDTO.ContentID
 	_, err = c.contentTranslationService.Update(*contentTranslation)
 	if err != nil {
-		return err
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Translation content could not be updated."})
 	}
 	return ctx.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
 }
