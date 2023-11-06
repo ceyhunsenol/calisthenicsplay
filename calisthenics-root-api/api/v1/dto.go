@@ -64,12 +64,12 @@ type GenreTypeDTO struct {
 
 // GenreDTO DTO
 type GenreDTO struct {
-	Type         string           `json:"type" validate:"required"`
-	Code         string           `json:"code" validate:"required"`
-	Description  string           `json:"description"`
-	Section      string           `json:"section"`
-	Active       bool             `json:"active" validate:"required"`
-	Translations []TranslationDTO `json:"translations"`
+	Type         string                  `json:"type" validate:"required"`
+	Code         string                  `json:"code" validate:"required"`
+	Description  string                  `json:"description"`
+	Section      string                  `json:"section"`
+	Active       bool                    `json:"active" validate:"required"`
+	Translations []ContentTranslationDTO `json:"translations"`
 }
 
 // TranslationDTO DTO

@@ -56,6 +56,7 @@ var ServiceSet = wire.NewSet(
 	service.NewHelperContentOperations,
 	service.NewRequirementContentOperations,
 	service.NewGenreContentOperations,
+	service.NewContentTranslationOperations,
 )
 
 var ControllerSet = wire.NewSet(

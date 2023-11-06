@@ -75,18 +75,20 @@ func (g *GenreController) SaveGenre(c echo.Context) error {
 		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Genre could not be saved."})
 	}
-	requests := make([]model.ContentTranslationRequest, 0)
+	request := model.ContentTranslationRequest{
+		ContentID:    savedGenre.ID,
+		Translations: make([]model.ContentTranslationModel, 0),
+	}
 	for _, translation := range genreDTO.Translations {
-		request := model.ContentTranslationRequest{
+		translationModel := model.ContentTranslationModel{
 			Code:      translation.Code,
 			LangCode:  translation.LangCode,
 			Translate: translation.Translate,
 			Active:    translation.Active,
-			ContentID: savedGenre.ID,
 		}
-		requests = append(requests, request)
+		request.Translations = append(request.Translations, translationModel)
 	}
-	serviceError := g.contentTranslationOperations.SaveContentTranslations(requests)
+	serviceError := g.contentTranslationOperations.SaveContentTranslations(request)
 	if err != nil {
 		tx.Rollback()
 		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
@@ -127,18 +129,20 @@ func (g *GenreController) UpdateGenre(c echo.Context) error {
 		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Genre could not be updated."})
 	}
-	requests := make([]model.ContentTranslationRequest, 0)
+	request := model.ContentTranslationRequest{
+		ContentID:    genre.ID,
+		Translations: make([]model.ContentTranslationModel, 0),
+	}
 	for _, translation := range genreDTO.Translations {
-		request := model.ContentTranslationRequest{
+		translationModel := model.ContentTranslationModel{
 			Code:      translation.Code,
 			LangCode:  translation.LangCode,
 			Translate: translation.Translate,
 			Active:    translation.Active,
-			ContentID: genre.ID,
 		}
-		requests = append(requests, request)
+		request.Translations = append(request.Translations, translationModel)
 	}
-	serviceError := g.contentTranslationOperations.SaveContentTranslations(requests)
+	serviceError := g.contentTranslationOperations.SaveContentTranslations(request)
 	if err != nil {
 		tx.Rollback()
 		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
@@ -189,10 +193,22 @@ func (g *GenreController) GetGenre(c echo.Context) error {
 
 func (g *GenreController) DeleteGenre(c echo.Context) error {
 	id := c.Param("id")
-	err := g.genreService.Delete(id)
-	if err != nil {
+	tx := g.DB.Begin()
+	if tx.Error != nil {
+		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Genre could not be deleted."})
 	}
+	err := g.genreService.Delete(id)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Genre could not be deleted."})
+	}
+	serviceError := g.contentTranslationOperations.DeleteAllContentTranslations(id)
+	if serviceError != nil {
+		tx.Rollback()
+		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+	}
+	tx.Commit()
 	return c.JSON(http.StatusNoContent, nil)
 }
 

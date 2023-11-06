@@ -58,18 +58,20 @@ func (u *MediaController) SaveMedia(c echo.Context) error {
 		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Media could not be saved."})
 	}
-	requests := make([]model.ContentTranslationRequest, 0)
+	request := model.ContentTranslationRequest{
+		ContentID:    savedMedia.ID,
+		Translations: make([]model.ContentTranslationModel, 0),
+	}
 	for _, translation := range mediaDTO.Translations {
-		request := model.ContentTranslationRequest{
+		translationModel := model.ContentTranslationModel{
 			Code:      translation.Code,
 			LangCode:  translation.LangCode,
 			Translate: translation.Translate,
 			Active:    translation.Active,
-			ContentID: savedMedia.ID,
 		}
-		requests = append(requests, request)
+		request.Translations = append(request.Translations, translationModel)
 	}
-	serviceError := u.contentTranslationOperations.SaveContentTranslations(requests)
+	serviceError := u.contentTranslationOperations.SaveContentTranslations(request)
 	if serviceError != nil {
 		tx.Rollback()
 		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
@@ -106,18 +108,20 @@ func (u *MediaController) UpdateMedia(c echo.Context) error {
 		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Media could not be updated."})
 	}
-	requests := make([]model.ContentTranslationRequest, 0)
+	request := model.ContentTranslationRequest{
+		ContentID:    media.ID,
+		Translations: make([]model.ContentTranslationModel, 0),
+	}
 	for _, translation := range mediaDTO.Translations {
-		request := model.ContentTranslationRequest{
+		translationModel := model.ContentTranslationModel{
 			Code:      translation.Code,
 			LangCode:  translation.LangCode,
 			Translate: translation.Translate,
 			Active:    translation.Active,
-			ContentID: media.ID,
 		}
-		requests = append(requests, request)
+		request.Translations = append(request.Translations, translationModel)
 	}
-	serviceError := u.contentTranslationOperations.SaveContentTranslations(requests)
+	serviceError := u.contentTranslationOperations.SaveContentTranslations(request)
 	if serviceError != nil {
 		tx.Rollback()
 		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
@@ -168,9 +172,21 @@ func (u *MediaController) GetMedia(c echo.Context) error {
 
 func (u *MediaController) DeleteMedia(c echo.Context) error {
 	id := c.Param("id")
-	err := u.mediaService.Delete(id)
-	if err != nil {
+	tx := u.DB.Begin()
+	if tx.Error != nil {
+		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Media could not be deleted."})
 	}
+	err := u.mediaService.Delete(id)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Media could not be deleted."})
+	}
+	serviceError := u.contentTranslationOperations.DeleteAllContentTranslations(id)
+	if serviceError != nil {
+		tx.Rollback()
+		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+	}
+	tx.Commit()
 	return c.JSON(http.StatusNoContent, nil)
 }

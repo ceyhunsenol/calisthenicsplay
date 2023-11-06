@@ -7,7 +7,8 @@ import (
 )
 
 type IContentTranslationOperations interface {
-	SaveContentTranslations(translations []model.ContentTranslationRequest) *model.ServiceError
+	SaveContentTranslations(request model.ContentTranslationRequest) *model.ServiceError
+	DeleteAllContentTranslations(contentID string) *model.ServiceError
 }
 
 type contentTranslationOperations struct {
@@ -20,23 +21,31 @@ func NewContentTranslationOperations(contentTranslationService IContentTranslati
 	}
 }
 
-func (o *contentTranslationOperations) SaveContentTranslations(translations []model.ContentTranslationRequest) *model.ServiceError {
-	for _, translation := range translations {
-		err := o.contentTranslationService.DeleteAllByContentID(translation.ContentID)
-		if err != nil {
-			return &model.ServiceError{Code: http.StatusInternalServerError, Message: "failed to translation process."}
-		}
+func (o *contentTranslationOperations) SaveContentTranslations(request model.ContentTranslationRequest) *model.ServiceError {
+	err := o.contentTranslationService.DeleteAllByContentID(request.ContentID)
+	if err != nil {
+		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "failed to translation process."}
+	}
+	for _, translation := range request.Translations {
 		contentTranslation := data.ContentTranslation{
 			Code:      translation.Code,
 			LangCode:  translation.LangCode,
 			Translate: translation.Translate,
 			Active:    translation.Active,
-			ContentID: translation.ContentID,
+			ContentID: request.ContentID,
 		}
 		_, err = o.contentTranslationService.Save(contentTranslation)
 		if err != nil {
 			return &model.ServiceError{Code: http.StatusInternalServerError, Message: "failed to translation process."}
 		}
+	}
+	return nil
+}
+
+func (o *contentTranslationOperations) DeleteAllContentTranslations(contentID string) *model.ServiceError {
+	err := o.contentTranslationService.DeleteAllByContentID(contentID)
+	if err != nil {
+		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "failed to translation process."}
 	}
 	return nil
 }

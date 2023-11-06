@@ -45,10 +45,13 @@ func InitializeApp() *echo.Echo {
 	iRequirementContentRepository := repository.NewRequirementContentRepository(db)
 	iRequirementContentService := service.NewRequirementContentService(iRequirementContentRepository)
 	iRequirementContentOperations := service.NewRequirementContentOperations(iRequirementContentService, iContentService)
-	contentController := v1.NewContentController(iContentService, iHelperContentOperations, iRequirementContentOperations)
+	iContentTranslationRepository := repository.NewContentTranslationRepository(db)
+	iContentTranslationService := service.NewContentTranslationService(iContentTranslationRepository)
+	iContentTranslationOperations := service.NewContentTranslationOperations(iContentTranslationService)
+	contentController := v1.NewContentController(iContentService, iHelperContentOperations, iRequirementContentOperations, iContentTranslationOperations, db)
 	iMediaRepository := repository.NewMediaRepository(db)
 	iMediaService := service.NewMediaService(iMediaRepository)
-	mediaController := v1.NewMediaController(iMediaService)
+	mediaController := v1.NewMediaController(iContentTranslationOperations, iMediaService, db)
 	iGenreTypeRepository := repository.NewGenreTypeRepository(db)
 	iGenreTypeService := service.NewGenreTypeService(iGenreTypeRepository)
 	genreTypeController := v1.NewGenreTypeController(iGenreTypeService)
@@ -57,12 +60,10 @@ func InitializeApp() *echo.Echo {
 	iGenreContentRepository := repository.NewGenreContentRepository(db)
 	iGenreContentService := service.NewGenreContentService(iGenreContentRepository)
 	iGenreContentOperations := service.NewGenreContentOperations(iGenreService, iGenreContentService, iContentService)
-	genreController := v1.NewGenreController(iGenreContentOperations, iGenreService)
+	genreController := v1.NewGenreController(iGenreContentOperations, iGenreService, iContentTranslationOperations, db)
 	iTranslationRepository := repository.NewTranslationRepository(db)
 	iTranslationService := service.NewTranslationService(iTranslationRepository)
 	translationController := v1.NewTranslationController(iTranslationService)
-	iContentTranslationRepository := repository.NewContentTranslationRepository(db)
-	iContentTranslationService := service.NewContentTranslationService(iContentTranslationRepository)
 	contentTranslationController := v1.NewContentTranslationController(iContentTranslationService)
 	echoEcho := InitRoutes(authController, userController, roleController, privilegeController, contentController, mediaController, genreTypeController, genreController, translationController, contentTranslationController, iUserService)
 	return echoEcho
@@ -76,7 +77,7 @@ var RepositorySet = wire.NewSet(repository.NewUserRepository, repository.NewPriv
 
 var DomainServiceSet = wire.NewSet(service.NewUserService, service.NewPrivilegeService, service.NewRoleService, service.NewContentService, service.NewMediaService, service.NewHelperContentService, service.NewRequirementContentService, service.NewGenreTypeService, service.NewGenreService, service.NewGenreContentService, service.NewTranslationService, service.NewContentTranslationService)
 
-var ServiceSet = wire.NewSet(service.NewAuthService, service.NewHelperContentOperations, service.NewRequirementContentOperations, service.NewGenreContentOperations)
+var ServiceSet = wire.NewSet(service.NewAuthService, service.NewHelperContentOperations, service.NewRequirementContentOperations, service.NewGenreContentOperations, service.NewContentTranslationOperations)
 
 var ControllerSet = wire.NewSet(v1.NewAuthController, v1.NewUserController, v1.NewRoleController, v1.NewPrivilegeController, v1.NewContentController, v1.NewMediaController, v1.NewGenreTypeController, v1.NewGenreController, v1.NewTranslationController, v1.NewContentTranslationController)
 
