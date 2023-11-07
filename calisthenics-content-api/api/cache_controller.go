@@ -36,19 +36,19 @@ func (u *CacheController) RefreshAll(c echo.Context) error {
 	if utils.Contains(cacheTypes, string(cache.Genre)) {
 		err := u.genreOperations.SaveCacheGenres()
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "General error"})
+			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Unknown error"})
 		}
 	}
 	if utils.Contains(cacheTypes, string(cache.Content)) {
 		err := u.contentOperations.SaveCacheContents()
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "General error"})
+			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Unknown error"})
 		}
 	}
 	if utils.Contains(cacheTypes, string(cache.Media)) {
 		err := u.mediaOperations.SaveCacheMedias()
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "General error"})
+			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Unknown error"})
 		}
 	}
 	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Cached all contents"})

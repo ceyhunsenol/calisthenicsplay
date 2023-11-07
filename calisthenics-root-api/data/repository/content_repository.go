@@ -62,6 +62,30 @@ func (r *contentRepository) Update(content data.Content) (*data.Content, error) 
 	return &content, nil
 }
 
+//func (r *contentRepository) Delete(id string) error {
+//	tx := r.DB.Begin()
+//	if tx.Error != nil {
+//		tx.Rollback()
+//		return tx.Error
+//	}
+//	err := r.DB.Delete(&data.Content{}, "id = ?", id).Error
+//	if err != nil {
+//		tx.Rollback()
+//		return tx.Error
+//	}
+//	err = r.DB.Delete(&data.HelperContent{}, "content_id = ?", id).Error
+//	if err != nil {
+//		tx.Rollback()
+//		return tx.Error
+//	}
+//	err = r.DB.Delete(&data.RequirementContent{}, "content_id", id).Error
+//	if err != nil {
+//		tx.Rollback()
+//		return tx.Error
+//	}
+//	return tx.Commit().Error
+//}
+
 func (r *contentRepository) Delete(id string) error {
 	return r.DB.Delete(&data.Content{}, "id = ?", id).Error
 }

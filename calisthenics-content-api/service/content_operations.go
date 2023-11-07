@@ -26,7 +26,7 @@ func NewContentOperations(contentService IContentService, contentCacheService ca
 func (o *contentOperations) SaveCacheContents() error {
 	contents, err := o.contentService.GetAll()
 	if err != nil {
-		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "General error"}
+		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
 	}
 
 	activeContents := make([]cache.ContentCache, 0)
@@ -50,7 +50,7 @@ func (o *contentOperations) SaveCacheContents() error {
 func (o *contentOperations) SaveCacheContent(ID string) (cache.ContentCache, error) {
 	content, err := o.contentService.GetByID(ID)
 	if err != nil {
-		return cache.ContentCache{}, &model.ServiceError{Code: http.StatusInternalServerError, Message: "General error"}
+		return cache.ContentCache{}, &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
 	}
 	contentCache := cache.ContentCache{
 		ID:                    content.ID,

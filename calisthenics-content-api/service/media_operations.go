@@ -30,7 +30,7 @@ func NewMediaOperations(mediaService IMediaService, mediaCacheService cache.IMed
 func (o *mediaOperations) SaveCacheMedias() error {
 	medias, err := o.mediaService.GetAll()
 	if err != nil {
-		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "General error"}
+		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
 	}
 
 	grouped := pkg.GroupByField(medias, func(media *data.Media) string {
@@ -68,7 +68,7 @@ func (o *mediaOperations) SaveCacheMedias() error {
 func (o *mediaOperations) SaveCacheMedia(ID string) (cache.MediaCache, error) {
 	media, err := o.mediaService.GetByID(ID)
 	if err != nil {
-		return cache.MediaCache{}, &model.ServiceError{Code: http.StatusInternalServerError, Message: "General error"}
+		return cache.MediaCache{}, &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
 	}
 
 	content, err := o.contentService.GetByID(media.ContentID)

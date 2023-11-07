@@ -27,7 +27,7 @@ func NewGenreOperations(genreService IGenreService, genreCacheService cache.IGen
 func (o *genreOperations) SaveCacheGenres() error {
 	genres, err := o.genreService.GetAll()
 	if err != nil {
-		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "General error"}
+		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
 	}
 	activeGenres := make([]cache.GenreCache, 0)
 	for _, value := range genres {
@@ -51,7 +51,7 @@ func (o *genreOperations) SaveCacheGenres() error {
 func (o *genreOperations) SaveCacheGenre(ID string) (cache.GenreCache, error) {
 	genre, err := o.genreService.GetByID(ID)
 	if err != nil {
-		return cache.GenreCache{}, &model.ServiceError{Code: http.StatusInternalServerError, Message: "General error"}
+		return cache.GenreCache{}, &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
 	}
 	genreCache := cache.GenreCache{
 		ID:                   genre.ID,
