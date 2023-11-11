@@ -31,17 +31,17 @@ func NewGeneralInfoCacheService(cacheService ICacheService) IGeneralInfoCacheSer
 }
 
 func (c *generalInfoCacheService) Save(cache GeneralInfoCache) {
-	c.Remove(cache.ID)
-	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.ID), cache.Value)
+	c.Remove(cache.Key)
+	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.Key), cache.Value)
 }
 
 func (c *generalInfoCacheService) SaveAllSlice(caches []GeneralInfoCache) {
 	for _, value := range caches {
-		c.Remove(value.ID)
+		c.Remove(value.Key)
 	}
 
 	for _, value := range caches {
-		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.ID), value.Value)
+		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.Key), value.Value)
 	}
 }
 

@@ -88,7 +88,7 @@ func (o *contentCacheOperations) SaveCacheContents() *model.ServiceError {
 
 func (o *contentCacheOperations) SaveCacheContent(ID string) (cache.ContentCache, *model.ServiceError) {
 	content, err := o.contentService.GetByID(ID)
-	if err != nil && !content.Active {
+	if err != nil || !content.Active {
 		return cache.ContentCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
 	}
 	contentCache := cache.ContentCache{

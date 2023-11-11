@@ -39,7 +39,19 @@ func InitializeApp() *echo.Echo {
 	iGenreService := service.NewGenreService(iGenreRepository)
 	iGenreCacheService := cache.NewGenreCacheService(iCacheService)
 	iGenreCacheOperations := service.NewGenreCacheOperations(iGenreService, iGenreCacheService)
-	cacheController := api.NewCacheController(iMediaCacheOperations, iContentCacheOperations, iGenreCacheOperations)
+	iGeneralInfoCacheService := cache.NewGeneralInfoCacheService(iCacheService)
+	iGeneralInfoRepository := repository.NewGeneralInfoRepository(db)
+	iGeneralInfoService := service.NewGeneralInfoService(iGeneralInfoRepository)
+	iGeneralInfoCacheOperations := service.NewGeneralInfoCacheOperations(iGeneralInfoCacheService, iGeneralInfoService)
+	iContentAccessCacheService := cache.NewContentAccessCacheService(iCacheService)
+	iContentAccessRepository := repository.NewContentAccessRepository(db)
+	iContentAccessService := service.NewContentAccessService(iContentAccessRepository)
+	iContentAccessCacheOperations := service.NewContentAccessCacheOperations(iContentAccessCacheService, iContentAccessService)
+	iMediaAccessCacheService := cache.NewMediaAccessCacheService(iCacheService)
+	iMediaAccessRepository := repository.NewMediaAccessRepository(db)
+	iMediaAccessService := service.NewMediaAccessService(iMediaAccessRepository)
+	iMediaAccessCacheOperations := service.NewMediaAccessCacheOperations(iMediaAccessCacheService, iMediaAccessService)
+	cacheController := api.NewCacheController(iMediaCacheOperations, iContentCacheOperations, iGenreCacheOperations, iGeneralInfoCacheOperations, iContentAccessCacheOperations, iMediaAccessCacheOperations)
 	iGenreOperations := service.NewGenreOperations(iGenreService, iGenreCacheService)
 	genreController := api.NewGenreController(iGenreOperations)
 	iContentOperations := service.NewContentOperations(iContentService, iContentCacheService)
@@ -53,13 +65,13 @@ func InitializeApp() *echo.Echo {
 
 var GeneralSet = wire.NewSet(NewDatabase, InitRoutes, cache.NewCacheManager)
 
-var RepositorySet = wire.NewSet(repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreRepository)
+var RepositorySet = wire.NewSet(repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreRepository, repository.NewGeneralInfoRepository, repository.NewContentAccessRepository, repository.NewMediaAccessRepository)
 
-var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService, service.NewInitCacheService)
+var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService, service.NewInitCacheService, service.NewGeneralInfoService, service.NewContentAccessService, service.NewMediaAccessService)
 
-var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCacheService, cache.NewGenreCacheService)
+var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCacheService, cache.NewGenreCacheService, cache.NewGeneralInfoCacheService, cache.NewMediaAccessCacheService, cache.NewContentAccessCacheService)
 
-var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations, service.NewMediaCacheOperations, service.NewContentCacheOperations, service.NewGenreCacheOperations)
+var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations, service.NewMediaCacheOperations, service.NewContentCacheOperations, service.NewGenreCacheOperations, service.NewGeneralInfoCacheOperations, service.NewContentAccessCacheOperations, service.NewMediaAccessCacheOperations)
 
 var ControllerSet = wire.NewSet(api.NewCacheController, api.NewGenreController, api.NewContentController)
 
@@ -89,6 +101,6 @@ func InitRoutes(
 	cacheController.InitCacheRoutes(e)
 	genreController.InitGenreRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
-
+	initCacheService.InitCache()
 	return e
 }

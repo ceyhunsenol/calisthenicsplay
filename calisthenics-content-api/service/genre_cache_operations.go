@@ -49,7 +49,7 @@ func (o *genreCacheOperations) SaveCacheGenres() *model.ServiceError {
 
 func (o *genreCacheOperations) SaveCacheGenre(ID string) (cache.GenreCache, *model.ServiceError) {
 	genre, err := o.genreService.GetByID(ID)
-	if err != nil {
+	if err != nil || !genre.Active {
 		return cache.GenreCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
 	}
 	genreCache := cache.GenreCache{

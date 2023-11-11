@@ -25,6 +25,9 @@ var RepositorySet = wire.NewSet(
 	repository.NewContentRepository,
 	repository.NewMediaRepository,
 	repository.NewGenreRepository,
+	repository.NewGeneralInfoRepository,
+	repository.NewContentAccessRepository,
+	repository.NewMediaAccessRepository,
 )
 
 var DomainServiceSet = wire.NewSet(
@@ -32,6 +35,9 @@ var DomainServiceSet = wire.NewSet(
 	service.NewMediaService,
 	service.NewGenreService,
 	service.NewInitCacheService,
+	service.NewGeneralInfoService,
+	service.NewContentAccessService,
+	service.NewMediaAccessService,
 )
 
 var CacheServiceSet = wire.NewSet(
@@ -50,6 +56,9 @@ var ServiceSet = wire.NewSet(
 	service.NewMediaCacheOperations,
 	service.NewContentCacheOperations,
 	service.NewGenreCacheOperations,
+	service.NewGeneralInfoCacheOperations,
+	service.NewContentAccessCacheOperations,
+	service.NewMediaAccessCacheOperations,
 )
 
 var ControllerSet = wire.NewSet(
@@ -89,6 +98,6 @@ func InitRoutes(
 	cacheController.InitCacheRoutes(e)
 	genreController.InitGenreRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
-	//initCacheService.InitCache()
+	initCacheService.InitCache()
 	return e
 }

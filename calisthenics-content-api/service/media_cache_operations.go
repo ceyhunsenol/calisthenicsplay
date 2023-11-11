@@ -65,7 +65,7 @@ func (o *mediaCacheOperations) SaveCacheMedias() *model.ServiceError {
 
 func (o *mediaCacheOperations) SaveCacheMedia(ID string) (cache.MediaCache, *model.ServiceError) {
 	media, err := o.mediaService.GetByID(ID)
-	if err != nil {
+	if err != nil || !media.Active {
 		return cache.MediaCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
 	}
 

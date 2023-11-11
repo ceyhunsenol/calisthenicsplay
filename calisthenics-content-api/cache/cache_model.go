@@ -33,7 +33,7 @@ type MediaCache struct {
 
 // GeneralInfoCache cache
 type GeneralInfoCache struct {
-	ID    string
+	Key   string
 	Value string
 }
 

@@ -6,7 +6,9 @@ import (
 )
 
 type IGeneralInfoRepository interface {
+	GetAll() ([]data.GeneralInfo, error)
 	GetByID(id string) (*data.GeneralInfo, error)
+	GetByKey(key string) (*data.GeneralInfo, error)
 }
 
 type generalInfoRepository struct {

@@ -9,19 +9,28 @@ import (
 )
 
 type CacheController struct {
-	mediaCacheOperations   service.IMediaCacheOperations
-	contentCacheOperations service.IContentCacheOperations
-	genreCacheOperations   service.IGenreCacheOperations
+	mediaCacheOperations         service.IMediaCacheOperations
+	contentCacheOperations       service.IContentCacheOperations
+	genreCacheOperations         service.IGenreCacheOperations
+	generalInfoCacheOperations   service.IGeneralInfoCacheOperations
+	contentAccessCacheOperations service.IContentAccessCacheOperations
+	mediaAccessCacheOperations   service.IMediaAccessCacheOperations
 }
 
 func NewCacheController(mediaCacheOperations service.IMediaCacheOperations,
 	contentCacheOperations service.IContentCacheOperations,
 	genreCacheOperations service.IGenreCacheOperations,
+	generalInfoCacheOperations service.IGeneralInfoCacheOperations,
+	contentAccessCacheOperations service.IContentAccessCacheOperations,
+	mediaAccessCacheOperations service.IMediaAccessCacheOperations,
 ) *CacheController {
 	return &CacheController{
-		mediaCacheOperations:   mediaCacheOperations,
-		contentCacheOperations: contentCacheOperations,
-		genreCacheOperations:   genreCacheOperations,
+		mediaCacheOperations:         mediaCacheOperations,
+		contentCacheOperations:       contentCacheOperations,
+		genreCacheOperations:         genreCacheOperations,
+		generalInfoCacheOperations:   generalInfoCacheOperations,
+		contentAccessCacheOperations: contentAccessCacheOperations,
+		mediaAccessCacheOperations:   mediaAccessCacheOperations,
 	}
 }
 
@@ -53,6 +62,24 @@ func (u *CacheController) RefreshAll(c echo.Context) error {
 			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 		}
 	}
+	if utils.Contains(cacheTypes, string(cache.GeneralInfo)) {
+		serviceError := u.generalInfoCacheOperations.SaveCacheGeneralInfos()
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+	}
+	if utils.Contains(cacheTypes, string(cache.ContentAccess)) {
+		serviceError := u.contentAccessCacheOperations.SaveCacheContentAccessList()
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+	}
+	if utils.Contains(cacheTypes, string(cache.MediaAccess)) {
+		serviceError := u.mediaAccessCacheOperations.SaveCacheMediaAccessList()
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+	}
 	return c.JSON(http.StatusOK, &MessageResource{Message: "Cached all contents"})
 }
 
@@ -77,6 +104,27 @@ func (u *CacheController) Refresh(c echo.Context) error {
 
 	case string(cache.Media):
 		cac, serviceError := u.mediaCacheOperations.SaveCacheMedia(id)
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+		return c.JSON(http.StatusOK, cac)
+
+	case string(cache.GeneralInfo):
+		cac, serviceError := u.generalInfoCacheOperations.SaveCacheGeneralInfo(id)
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+		return c.JSON(http.StatusOK, cac)
+
+	case string(cache.ContentAccess):
+		cac, serviceError := u.contentAccessCacheOperations.SaveCacheContentAccess(id)
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+		return c.JSON(http.StatusOK, cac)
+
+	case string(cache.MediaAccess):
+		cac, serviceError := u.mediaAccessCacheOperations.SaveCacheMediaAccess(id)
 		if serviceError != nil {
 			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 		}
