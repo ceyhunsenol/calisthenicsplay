@@ -38,6 +38,9 @@ var CacheServiceSet = wire.NewSet(
 	cache.NewMediaCacheService,
 	cache.NewContentCacheService,
 	cache.NewGenreCacheService,
+	cache.NewGeneralInfoCacheService,
+	cache.NewMediaAccessCacheService,
+	cache.NewContentAccessCacheService,
 )
 
 var ServiceSet = wire.NewSet(

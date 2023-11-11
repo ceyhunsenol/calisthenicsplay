@@ -30,3 +30,23 @@ type MediaCache struct {
 	Active               bool
 	ContentID            string
 }
+
+// GeneralInfoCache cache
+type GeneralInfoCache struct {
+	ID    string
+	Value string
+}
+
+// ContentAccessCache cache
+type ContentAccessCache struct {
+	ID        string
+	ContentID string
+	Audience  string
+}
+
+// MediaAccessCache cache
+type MediaAccessCache struct {
+	ID       string
+	MediaID  string
+	Audience string
+}
