@@ -27,7 +27,7 @@ func (u *GenreController) GetGenres(c echo.Context) error {
 	section := c.QueryParam("section")
 
 	if genreType == "" {
-		return c.JSON(http.StatusBadRequest, MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format"})
+		return c.JSON(http.StatusBadRequest, MessageResource{Message: "Invalid request format"})
 	}
 
 	request := model.GenreRequest{
@@ -35,5 +35,19 @@ func (u *GenreController) GetGenres(c echo.Context) error {
 		Section: section,
 	}
 	genres := u.genreOperations.GetGenres(request)
-	return c.JSON(http.StatusOK, genres)
+
+	resources := make([]GenreResource, 0)
+	for _, genre := range genres {
+		resource := GenreResource{
+			ID:          genre.ID,
+			Type:        "",
+			Code:        "",
+			Description: "",
+			Section:     "",
+			Active:      false,
+			Contents:    nil,
+		}
+		resources = append(resources, resource)
+	}
+	return c.JSON(http.StatusOK, resources)
 }

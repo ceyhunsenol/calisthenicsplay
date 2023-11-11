@@ -49,18 +49,18 @@ func (u *ContentController) InitContentRoutes(e *echo.Group) {
 func (u *ContentController) SaveContent(c echo.Context) error {
 	contentDTO := ContentDTO{}
 	if err := c.Bind(&contentDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := c.Validate(&contentDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 
 	exists, err := u.contentService.ExistsByCode(contentDTO.Code)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content could not be saved."})
 	}
 	if exists {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Content already exists in this code."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Content already exists in this code."})
 	}
 
 	content := data.Content{
@@ -72,12 +72,12 @@ func (u *ContentController) SaveContent(c echo.Context) error {
 	tx := u.DB.Begin()
 	if tx.Error != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content could not be saved."})
 	}
-	_, err = u.contentService.Save(content)
+	_, err = u.contentService.Save(tx, content)
 	if err != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content could not be saved."})
 	}
 	request := model.ContentTranslationRequest{
 		ContentID:    content.ID,
@@ -92,31 +92,30 @@ func (u *ContentController) SaveContent(c echo.Context) error {
 		}
 		request.Translations = append(request.Translations, translationModel)
 	}
-	serviceError := u.contentTranslationOperations.SaveContentTranslations(request)
+	serviceError := u.contentTranslationOperations.SaveContentTranslations(tx, request)
 	if serviceError != nil {
-		tx.Rollback()
-		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
 	tx.Commit()
-	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
+	return c.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
 func (u *ContentController) UpdateContent(c echo.Context) error {
 	contentDTO := ContentDTO{}
 	if err := c.Bind(&contentDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := c.Validate(&contentDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 	id := c.Param("id")
 	exists, err := u.contentService.GetByCode(contentDTO.Code)
 	if err == nil && exists.ID != id {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Content already exists in this code."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Content already exists in this code."})
 	}
 	content, err := u.contentService.GetByID(id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, &MessageResource{Code: http.StatusNotFound, Message: "Content not found."})
+		return c.JSON(http.StatusNotFound, &MessageResource{Message: "Content not found."})
 	}
 
 	content.Code = contentDTO.Code
@@ -126,12 +125,12 @@ func (u *ContentController) UpdateContent(c echo.Context) error {
 	tx := u.DB.Begin()
 	if tx.Error != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be updated."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content could not be updated."})
 	}
-	_, err = u.contentService.Update(*content)
+	_, err = u.contentService.Update(tx, *content)
 	if err != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be updated."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content could not be updated."})
 	}
 	request := model.ContentTranslationRequest{
 		ContentID:    content.ID,
@@ -146,19 +145,18 @@ func (u *ContentController) UpdateContent(c echo.Context) error {
 		}
 		request.Translations = append(request.Translations, translationModel)
 	}
-	serviceError := u.contentTranslationOperations.SaveContentTranslations(request)
+	serviceError := u.contentTranslationOperations.SaveContentTranslations(tx, request)
 	if serviceError != nil {
-		tx.Rollback()
-		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
 	tx.Commit()
-	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
+	return c.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
 
 func (u *ContentController) GetContents(c echo.Context) error {
 	contents, err := u.contentService.GetAll()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Contents could not be got."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Contents could not be got."})
 	}
 
 	contentResources := make([]ContentResource, 0)
@@ -188,7 +186,7 @@ func (u *ContentController) GetContent(c echo.Context) error {
 	id := c.Param("id")
 	content, err := u.contentService.GetByID(id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, &MessageResource{Code: http.StatusNotFound, Message: "Content not found."})
+		return c.JSON(http.StatusNotFound, &MessageResource{Message: "Content not found."})
 	}
 
 	mediaResources := make([]ContentMediaResource, 0)
@@ -216,17 +214,16 @@ func (u *ContentController) DeleteContent(c echo.Context) error {
 	tx := u.DB.Begin()
 	if tx.Error != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be deleted."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content could not be deleted."})
 	}
-	err := u.contentService.Delete(id)
+	err := u.contentService.Delete(tx, id)
 	if err != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content could not be deleted."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content could not be deleted."})
 	}
-	serviceError := u.contentTranslationOperations.DeleteAllContentTranslations(id)
+	serviceError := u.contentTranslationOperations.DeleteAllContentTranslations(tx, id)
 	if serviceError != nil {
-		tx.Rollback()
-		return c.JSON(serviceError.Code, &MessageResource{Code: serviceError.Code, Message: serviceError.Message})
+		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
 	tx.Commit()
 	return c.JSON(http.StatusNoContent, nil)
@@ -235,10 +232,10 @@ func (u *ContentController) DeleteContent(c echo.Context) error {
 func (u *ContentController) AddHelperContent(c echo.Context) error {
 	helperContentDTO := HelperContentDTO{}
 	if err := c.Bind(&helperContentDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := c.Validate(&helperContentDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 
 	id := c.Param("id")
@@ -248,10 +245,10 @@ func (u *ContentController) AddHelperContent(c echo.Context) error {
 	}
 	err := u.helperContentOperations.AddHelperContent(request)
 	if err != nil {
-		return c.JSON(err.Code, &MessageResource{Code: err.Code, Message: err.Message})
+		return c.JSON(err.Code, &MessageResource{Message: err.Message})
 	}
 
-	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Helper content added."})
+	return c.JSON(http.StatusCreated, &MessageResource{Message: "Helper content added."})
 }
 
 func (u *ContentController) RemoveHelperContent(c echo.Context) error {
@@ -263,7 +260,7 @@ func (u *ContentController) RemoveHelperContent(c echo.Context) error {
 	}
 	err := u.helperContentOperations.RemoveHelperContent(request)
 	if err != nil {
-		return c.JSON(err.Code, &MessageResource{Code: err.Code, Message: err.Message})
+		return c.JSON(err.Code, &MessageResource{Message: err.Message})
 	}
 
 	return c.JSON(http.StatusNoContent, nil)
@@ -272,10 +269,10 @@ func (u *ContentController) RemoveHelperContent(c echo.Context) error {
 func (u *ContentController) AddRequirementContent(c echo.Context) error {
 	requirementContentDTO := RequirementContentDTO{}
 	if err := c.Bind(&requirementContentDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := c.Validate(&requirementContentDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 
 	id := c.Param("id")
@@ -285,10 +282,10 @@ func (u *ContentController) AddRequirementContent(c echo.Context) error {
 	}
 	err := u.requirementContentOperations.AddRequirementContent(request)
 	if err != nil {
-		return c.JSON(err.Code, &MessageResource{Code: err.Code, Message: err.Message})
+		return c.JSON(err.Code, &MessageResource{Message: err.Message})
 	}
 
-	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Requirement content added."})
+	return c.JSON(http.StatusCreated, &MessageResource{Message: "Requirement content added."})
 }
 
 func (u *ContentController) RemoveRequirementContent(c echo.Context) error {
@@ -300,7 +297,7 @@ func (u *ContentController) RemoveRequirementContent(c echo.Context) error {
 	}
 	err := u.requirementContentOperations.RemoveRequirementContent(request)
 	if err != nil {
-		return c.JSON(err.Code, &MessageResource{Code: err.Code, Message: err.Message})
+		return c.JSON(err.Code, &MessageResource{Message: err.Message})
 	}
 
 	return c.JSON(http.StatusNoContent, nil)

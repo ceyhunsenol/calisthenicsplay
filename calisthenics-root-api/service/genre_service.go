@@ -3,16 +3,17 @@ package service
 import (
 	"calisthenics-root-api/data"
 	"calisthenics-root-api/data/repository"
+	"gorm.io/gorm"
 )
 
 type IGenreService interface {
-	Save(genre data.Genre) (*data.Genre, error)
+	Save(tx *gorm.DB, genre data.Genre) (*data.Genre, error)
 	GetAll() ([]data.Genre, error)
 	GetByID(id string) (*data.Genre, error)
 	ExistsByCode(code string) (bool, error)
 	GetByCode(code string) (*data.Genre, error)
-	Update(genre data.Genre) (*data.Genre, error)
-	Delete(id string) error
+	Update(tx *gorm.DB, genre data.Genre) (*data.Genre, error)
+	Delete(tx *gorm.DB, id string) error
 }
 
 type genreService struct {
@@ -23,8 +24,8 @@ func NewGenreService(genreRepository repository.IGenreRepository) IGenreService 
 	return &genreService{genreRepository: genreRepository}
 }
 
-func (s *genreService) Save(genre data.Genre) (*data.Genre, error) {
-	return s.genreRepository.Save(genre)
+func (s *genreService) Save(tx *gorm.DB, genre data.Genre) (*data.Genre, error) {
+	return s.genreRepository.Save(tx, genre)
 }
 
 func (s *genreService) GetAll() ([]data.Genre, error) {
@@ -43,10 +44,10 @@ func (s *genreService) GetByCode(code string) (*data.Genre, error) {
 	return s.genreRepository.GetByCode(code)
 }
 
-func (s *genreService) Update(genre data.Genre) (*data.Genre, error) {
-	return s.genreRepository.Update(genre)
+func (s *genreService) Update(tx *gorm.DB, genre data.Genre) (*data.Genre, error) {
+	return s.genreRepository.Update(tx, genre)
 }
 
-func (s *genreService) Delete(id string) error {
-	return s.genreRepository.Delete(id)
+func (s *genreService) Delete(tx *gorm.DB, id string) error {
+	return s.genreRepository.Delete(tx, id)
 }

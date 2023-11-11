@@ -6,13 +6,13 @@ import (
 )
 
 type IContentRepository interface {
-	Save(content data.Content) (*data.Content, error)
+	Save(tx *gorm.DB, content data.Content) (*data.Content, error)
 	GetAll() ([]data.Content, error)
 	GetByID(id string) (*data.Content, error)
 	GetByCode(code string) (*data.Content, error)
 	ExistsByCode(code string) (bool, error)
-	Update(content data.Content) (*data.Content, error)
-	Delete(id string) error
+	Update(tx *gorm.DB, content data.Content) (*data.Content, error)
+	Delete(tx *gorm.DB, id string) error
 }
 
 type contentRepository struct {
@@ -23,8 +23,8 @@ func NewContentRepository(db *gorm.DB) IContentRepository {
 	return &contentRepository{DB: db}
 }
 
-func (r *contentRepository) Save(content data.Content) (*data.Content, error) {
-	result := r.DB.Create(&content)
+func (r *contentRepository) Save(tx *gorm.DB, content data.Content) (*data.Content, error) {
+	result := tx.Create(&content)
 	return &content, result.Error
 }
 
@@ -54,38 +54,14 @@ func (r *contentRepository) ExistsByCode(code string) (bool, error) {
 	return count > 0, nil
 }
 
-func (r *contentRepository) Update(content data.Content) (*data.Content, error) {
-	result := r.DB.Updates(&content)
+func (r *contentRepository) Update(tx *gorm.DB, content data.Content) (*data.Content, error) {
+	result := tx.Updates(&content)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &content, nil
 }
 
-//func (r *contentRepository) Delete(id string) error {
-//	tx := r.DB.Begin()
-//	if tx.Error != nil {
-//		tx.Rollback()
-//		return tx.Error
-//	}
-//	err := r.DB.Delete(&data.Content{}, "id = ?", id).Error
-//	if err != nil {
-//		tx.Rollback()
-//		return tx.Error
-//	}
-//	err = r.DB.Delete(&data.HelperContent{}, "content_id = ?", id).Error
-//	if err != nil {
-//		tx.Rollback()
-//		return tx.Error
-//	}
-//	err = r.DB.Delete(&data.RequirementContent{}, "content_id", id).Error
-//	if err != nil {
-//		tx.Rollback()
-//		return tx.Error
-//	}
-//	return tx.Commit().Error
-//}
-
-func (r *contentRepository) Delete(id string) error {
-	return r.DB.Delete(&data.Content{}, "id = ?", id).Error
+func (r *contentRepository) Delete(tx *gorm.DB, id string) error {
+	return tx.Delete(&data.Content{}, "id = ?", id).Error
 }

@@ -5,24 +5,24 @@ type IInitCacheService interface {
 }
 
 type initCacheService struct {
-	contentOperations IContentOperations
-	genreOperations   IGenreOperations
-	mediaOperations   IMediaOperations
+	contentCacheOperations IContentCacheOperations
+	genreCacheOperations   IGenreCacheOperations
+	mediaCacheOperations   IMediaCacheOperations
 }
 
-func NewInitCacheService(contentOperations IContentOperations,
-	genreOperations IGenreOperations,
-	mediaOperations IMediaOperations,
+func NewInitCacheService(contentCacheOperations IContentCacheOperations,
+	genreCacheOperations IGenreCacheOperations,
+	mediaCacheOperations IMediaCacheOperations,
 ) IInitCacheService {
 	return &initCacheService{
-		contentOperations: contentOperations,
-		genreOperations:   genreOperations,
-		mediaOperations:   mediaOperations,
+		genreCacheOperations:   genreCacheOperations,
+		contentCacheOperations: contentCacheOperations,
+		mediaCacheOperations:   mediaCacheOperations,
 	}
 }
 
 func (c *initCacheService) InitCache() {
-	c.genreOperations.SaveCacheGenres()
-	c.contentOperations.SaveCacheContents()
-	c.mediaOperations.SaveCacheMedias()
+	c.genreCacheOperations.SaveCacheGenres()
+	c.contentCacheOperations.SaveCacheContents()
+	c.mediaCacheOperations.SaveCacheMedias()
 }

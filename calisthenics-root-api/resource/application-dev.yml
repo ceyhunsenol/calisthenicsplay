@@ -7,3 +7,7 @@ security:
   jwt:
     access-token-secret-key: "calisthenicsRoot"
     refresh-token-secret-key: "calisthenicsRoot2"
+
+integration:
+  calisthenics:
+    content: http://localhost:1322

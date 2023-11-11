@@ -16,7 +16,8 @@ type IMediaCacheService interface {
 	GetAll() []MediaCache
 	Remove(ID string)
 	RemoveAll()
-	GetAllByContentID(contentID, videoType string) []string
+	GetAllIDsByContentID(contentID, videoType string) []string
+	GetAllByContentID(contentID, videoType string) []MediaCache
 }
 
 type mediaCacheService struct {
@@ -43,7 +44,7 @@ func (c *mediaCacheService) Save(cache MediaCache) {
 		return
 	}
 	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.ID), cache)
-	IDs := c.GetAllByContentID(cache.ContentID, cache.Type)
+	IDs := c.GetAllIDsByContentID(cache.ContentID, cache.Type)
 	pkg.AddIfNotExists(&IDs, cache.ID)
 	c.cacheService.Set(c.keyContent, fmt.Sprintf(":%s:%s", cache.ContentID, cache.Type), IDs)
 }
@@ -69,7 +70,7 @@ func (c *mediaCacheService) SaveAllSlice(caches []MediaCache) {
 
 	for s, value := range grouped {
 		split := strings.Split(s, ":")
-		IDs := c.GetAllByContentID(split[0], split[1])
+		IDs := c.GetAllIDsByContentID(split[0], split[1])
 		for _, ca := range value {
 			pkg.AddIfNotExists(&IDs, ca.ID)
 		}
@@ -124,7 +125,7 @@ func (c *mediaCacheService) Remove(ID string) {
 		return
 	}
 	c.cacheService.Delete(c.key, fmt.Sprintf("%s:_", ID))
-	IDs := c.GetAllByContentID(value.ContentID, value.Type)
+	IDs := c.GetAllIDsByContentID(value.ContentID, value.Type)
 	pkg.RemoveIfExists(&IDs, ID)
 	c.cacheService.Set(c.keyContent, fmt.Sprintf(":%s:%s", value.ContentID, value.Type), IDs)
 }
@@ -136,10 +137,15 @@ func (c *mediaCacheService) RemoveAll() {
 	c.cacheService.CreateCache(c.keyContent)
 }
 
-func (c *mediaCacheService) GetAllByContentID(contentID, videoType string) []string {
+func (c *mediaCacheService) GetAllIDsByContentID(contentID, videoType string) []string {
 	value, b := c.cacheService.Get(c.keyContent, fmt.Sprintf(":%s:%s", contentID, videoType))
 	if !b {
 		return make([]string, 0)
 	}
 	return value.([]string)
+}
+
+func (c *mediaCacheService) GetAllByContentID(contentID, videoType string) []MediaCache {
+	IDs := c.GetAllIDsByContentID(contentID, videoType)
+	return c.GetAllByIDsInSlice(IDs)
 }

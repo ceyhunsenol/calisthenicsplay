@@ -6,11 +6,11 @@ import (
 )
 
 type IMediaRepository interface {
-	Save(media data.Media) (*data.Media, error)
+	Save(tx *gorm.DB, media data.Media) (*data.Media, error)
 	GetAll() ([]data.Media, error)
 	GetByID(id string) (*data.Media, error)
-	Update(media data.Media) (*data.Media, error)
-	Delete(id string) error
+	Update(tx *gorm.DB, media data.Media) (*data.Media, error)
+	Delete(tx *gorm.DB, id string) error
 }
 
 type mediaRepository struct {
@@ -21,8 +21,8 @@ func NewMediaRepository(db *gorm.DB) IMediaRepository {
 	return &mediaRepository{DB: db}
 }
 
-func (r *mediaRepository) Save(media data.Media) (*data.Media, error) {
-	result := r.DB.Create(&media)
+func (r *mediaRepository) Save(tx *gorm.DB, media data.Media) (*data.Media, error) {
+	result := tx.Create(&media)
 	return &media, result.Error
 }
 
@@ -38,14 +38,14 @@ func (r *mediaRepository) GetByID(id string) (*data.Media, error) {
 	return &media, result.Error
 }
 
-func (r *mediaRepository) Update(media data.Media) (*data.Media, error) {
-	result := r.DB.Updates(&media)
+func (r *mediaRepository) Update(tx *gorm.DB, media data.Media) (*data.Media, error) {
+	result := tx.Updates(&media)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &media, nil
 }
 
-func (r *mediaRepository) Delete(id string) error {
-	return r.DB.Delete(&data.Media{}, "id = ?", id).Error
+func (r *mediaRepository) Delete(tx *gorm.DB, id string) error {
+	return tx.Delete(&data.Media{}, "id = ?", id).Error
 }

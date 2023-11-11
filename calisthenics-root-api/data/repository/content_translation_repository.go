@@ -6,7 +6,7 @@ import (
 )
 
 type IContentTranslationRepository interface {
-	Save(translation data.ContentTranslation) (*data.ContentTranslation, error)
+	Save(tx *gorm.DB, translation data.ContentTranslation) (*data.ContentTranslation, error)
 	GetAll() ([]data.ContentTranslation, error)
 	GetByID(id string) (*data.ContentTranslation, error)
 	ExistsByCodeAndLangCode(code, langCode string) (bool, error)
@@ -14,7 +14,7 @@ type IContentTranslationRepository interface {
 	GetAllByCode(code string) ([]data.ContentTranslation, error)
 	Update(translation data.ContentTranslation) (*data.ContentTranslation, error)
 	Delete(id string) error
-	DeleteAllByContentID(contentID string) error
+	DeleteAllByContentID(tx *gorm.DB, contentID string) error
 }
 
 type contentTranslationRepository struct {
@@ -25,8 +25,8 @@ func NewContentTranslationRepository(db *gorm.DB) IContentTranslationRepository 
 	return &contentTranslationRepository{DB: db}
 }
 
-func (r *contentTranslationRepository) Save(translation data.ContentTranslation) (*data.ContentTranslation, error) {
-	result := r.DB.Create(&translation)
+func (r *contentTranslationRepository) Save(tx *gorm.DB, translation data.ContentTranslation) (*data.ContentTranslation, error) {
+	result := tx.Create(&translation)
 	return &translation, result.Error
 }
 
@@ -74,6 +74,6 @@ func (r *contentTranslationRepository) Delete(id string) error {
 	return r.DB.Delete(&data.ContentTranslation{}, "id = ?", id).Error
 }
 
-func (r *contentTranslationRepository) DeleteAllByContentID(contentID string) error {
-	return r.DB.Delete(&data.ContentTranslation{}, "content_id = ?", contentID).Error
+func (r *contentTranslationRepository) DeleteAllByContentID(tx *gorm.DB, contentID string) error {
+	return tx.Delete(&data.ContentTranslation{}, "content_id = ?", contentID).Error
 }

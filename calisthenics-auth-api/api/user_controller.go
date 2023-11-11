@@ -30,11 +30,11 @@ func (u *UserController) UserInfo(c echo.Context) error {
 	token, _ := pkg.ClearToken(context.Authorization)
 	userID, err := pkg.GetUserIDFromToken(token, u.accessTokenSecretKey)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, &MessageResource{Code: http.StatusUnauthorized, Message: err.Error()})
+		return c.JSON(http.StatusUnauthorized, &MessageResource{Message: err.Error()})
 	}
 	user, err := u.userService.GetById(userID)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, &MessageResource{Code: http.StatusUnauthorized, Message: "Unauthorized."})
+		return c.JSON(http.StatusUnauthorized, &MessageResource{Message: "Unauthorized."})
 	}
 	userResource := UserResource{
 		ID:       user.ID,

@@ -44,11 +44,15 @@ var ServiceSet = wire.NewSet(
 	service.NewMediaOperations,
 	service.NewContentOperations,
 	service.NewGenreOperations,
+	service.NewMediaCacheOperations,
+	service.NewContentCacheOperations,
+	service.NewGenreCacheOperations,
 )
 
 var ControllerSet = wire.NewSet(
 	api.NewCacheController,
 	api.NewGenreController,
+	api.NewContentController,
 )
 
 func InitializeApp() *echo.Echo {
@@ -74,6 +78,7 @@ func NewDatabase() *gorm.DB {
 func InitRoutes(
 	cacheController *api.CacheController,
 	genreController *api.GenreController,
+	contentController *api.ContentController,
 	initCacheService service.IInitCacheService,
 ) *echo.Echo {
 	e := echo.New()
@@ -81,6 +86,6 @@ func InitRoutes(
 	cacheController.InitCacheRoutes(e)
 	genreController.InitGenreRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
-	initCacheService.InitCache()
+	//initCacheService.InitCache()
 	return e
 }

@@ -8,6 +8,7 @@ import (
 	"calisthenics-root-api/config"
 	"calisthenics-root-api/data"
 	"calisthenics-root-api/data/repository"
+	"calisthenics-root-api/integration/calisthenics"
 	"calisthenics-root-api/middleware"
 	"calisthenics-root-api/service"
 	"fmt"
@@ -20,6 +21,10 @@ import (
 )
 
 var GeneralSet = wire.NewSet(NewDatabase, InitRoutes)
+
+var IntegrationSet = wire.NewSet(
+	calisthenics.NewCalisthenicsContentService,
+)
 
 var RepositorySet = wire.NewSet(
 	repository.NewUserRepository,
@@ -57,6 +62,7 @@ var ServiceSet = wire.NewSet(
 	service.NewRequirementContentOperations,
 	service.NewGenreContentOperations,
 	service.NewContentTranslationOperations,
+	service.NewCacheRequestService,
 )
 
 var ControllerSet = wire.NewSet(
@@ -73,7 +79,7 @@ var ControllerSet = wire.NewSet(
 )
 
 func InitializeApp() *echo.Echo {
-	wire.Build(GeneralSet, RepositorySet, DomainServiceSet, ServiceSet, ControllerSet)
+	wire.Build(GeneralSet, RepositorySet, DomainServiceSet, ServiceSet, ControllerSet, IntegrationSet)
 	return &echo.Echo{}
 }
 

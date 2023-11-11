@@ -14,7 +14,8 @@ type IContentCacheService interface {
 	GetAll() []ContentCache
 	Remove(ID string)
 	RemoveAll()
-	GetByCode(code string) (string, error)
+	GetIdByCode(code string) (string, error)
+	GetByCode(code string) (ContentCache, error)
 }
 
 type ContentCacheService struct {
@@ -117,7 +118,7 @@ func (c *ContentCacheService) RemoveAll() {
 	c.cacheService.CreateCache(c.keyCode)
 }
 
-func (c *ContentCacheService) GetByCode(code string) (string, error) {
+func (c *ContentCacheService) GetIdByCode(code string) (string, error) {
 	value, b := c.cacheService.Get(c.keyCode, fmt.Sprintf(":%s", code))
 	if !b {
 		return "", fmt.Errorf("value not found with key")
@@ -125,4 +126,16 @@ func (c *ContentCacheService) GetByCode(code string) (string, error) {
 
 	cacheValue := value.(string)
 	return cacheValue, nil
+}
+
+func (c *ContentCacheService) GetByCode(code string) (ContentCache, error) {
+	id, err := c.GetIdByCode(code)
+	if err != nil {
+		return ContentCache{}, err
+	}
+	cac, err := c.GetByID(id)
+	if err != nil {
+		return ContentCache{}, err
+	}
+	return cac, nil
 }

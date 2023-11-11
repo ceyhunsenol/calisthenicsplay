@@ -11,3 +11,7 @@ type HelperContentRequest struct {
 	ContentID       string
 	HelperContentID string
 }
+
+type ContentModel struct {
+	ID string
+}

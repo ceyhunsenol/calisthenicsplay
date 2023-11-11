@@ -32,17 +32,20 @@ func InitializeApp() *echo.Echo {
 	iMediaCacheService := cache.NewMediaCacheService(iCacheService)
 	iContentRepository := repository.NewContentRepository(db)
 	iContentService := service.NewContentService(iContentRepository)
-	iMediaOperations := service.NewMediaOperations(iMediaService, iMediaCacheService, iContentService)
+	iMediaCacheOperations := service.NewMediaCacheOperations(iMediaService, iMediaCacheService, iContentService)
 	iContentCacheService := cache.NewContentCacheService(iCacheService)
-	iContentOperations := service.NewContentOperations(iContentService, iContentCacheService)
+	iContentCacheOperations := service.NewContentCacheOperations(iContentService, iContentCacheService)
 	iGenreRepository := repository.NewGenreRepository(db)
 	iGenreService := service.NewGenreService(iGenreRepository)
 	iGenreCacheService := cache.NewGenreCacheService(iCacheService)
+	iGenreCacheOperations := service.NewGenreCacheOperations(iGenreService, iGenreCacheService)
+	cacheController := api.NewCacheController(iMediaCacheOperations, iContentCacheOperations, iGenreCacheOperations)
 	iGenreOperations := service.NewGenreOperations(iGenreService, iGenreCacheService)
-	cacheController := api.NewCacheController(iMediaOperations, iContentOperations, iGenreOperations)
 	genreController := api.NewGenreController(iGenreOperations)
-	iInitCacheService := service.NewInitCacheService(iContentOperations, iGenreOperations, iMediaOperations)
-	echoEcho := InitRoutes(cacheController, genreController, iInitCacheService)
+	iContentOperations := service.NewContentOperations(iContentService, iContentCacheService)
+	contentController := api.NewContentController(iContentOperations)
+	iInitCacheService := service.NewInitCacheService(iContentCacheOperations, iGenreCacheOperations, iMediaCacheOperations)
+	echoEcho := InitRoutes(cacheController, genreController, contentController, iInitCacheService)
 	return echoEcho
 }
 
@@ -56,9 +59,9 @@ var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaSe
 
 var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCacheService, cache.NewGenreCacheService)
 
-var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations)
+var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations, service.NewMediaCacheOperations, service.NewContentCacheOperations, service.NewGenreCacheOperations)
 
-var ControllerSet = wire.NewSet(api.NewCacheController, api.NewGenreController)
+var ControllerSet = wire.NewSet(api.NewCacheController, api.NewGenreController, api.NewContentController)
 
 func NewDatabase() *gorm.DB {
 	dbUser := viper.GetString("database.user")
@@ -78,6 +81,7 @@ func NewDatabase() *gorm.DB {
 func InitRoutes(
 	cacheController *api.CacheController,
 	genreController *api.GenreController,
+	contentController *api.ContentController,
 	initCacheService service.IInitCacheService,
 ) *echo.Echo {
 	e := echo.New()
@@ -85,6 +89,6 @@ func InitRoutes(
 	cacheController.InitCacheRoutes(e)
 	genreController.InitGenreRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
-	initCacheService.InitCache()
+
 	return e
 }

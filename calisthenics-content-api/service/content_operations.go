@@ -7,8 +7,7 @@ import (
 )
 
 type IContentOperations interface {
-	SaveCacheContents() error
-	SaveCacheContent(ID string) (cache.ContentCache, error)
+	GetContentByCode(code string) (model.ContentModel, *model.ServiceError)
 }
 
 type contentOperations struct {
@@ -23,43 +22,11 @@ func NewContentOperations(contentService IContentService, contentCacheService ca
 	}
 }
 
-func (o *contentOperations) SaveCacheContents() error {
-	contents, err := o.contentService.GetAll()
+func (o *contentOperations) GetContentByCode(code string) (model.ContentModel, *model.ServiceError) {
+	content, err := o.contentCacheService.GetByCode(code)
 	if err != nil {
-		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
+		return model.ContentModel{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Content not found"}
 	}
-
-	activeContents := make([]cache.ContentCache, 0)
-	for _, value := range contents {
-		if value.Active {
-			contentCache := cache.ContentCache{
-				ID:                    value.ID,
-				CodeMultiLang:         nil,
-				DescriptionMultiLang:  nil,
-				Active:                true,
-				HelperContentIDs:      nil,
-				RequirementContentIDs: nil,
-			}
-			activeContents = append(activeContents, contentCache)
-		}
-	}
-	o.contentCacheService.SaveAllSlice(activeContents)
-	return nil
-}
-
-func (o *contentOperations) SaveCacheContent(ID string) (cache.ContentCache, error) {
-	content, err := o.contentService.GetByID(ID)
-	if err != nil {
-		return cache.ContentCache{}, &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
-	}
-	contentCache := cache.ContentCache{
-		ID:                    content.ID,
-		CodeMultiLang:         nil,
-		DescriptionMultiLang:  nil,
-		Active:                true,
-		HelperContentIDs:      nil,
-		RequirementContentIDs: nil,
-	}
-	o.contentCacheService.Save(contentCache)
-	return contentCache, nil
+	contentModel := model.ContentModel{ID: content.ID}
+	return contentModel, nil
 }

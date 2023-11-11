@@ -26,18 +26,18 @@ func (t *TranslationController) InitTranslationRoutes(e *echo.Group) {
 func (t *TranslationController) SaveTranslation(c echo.Context) error {
 	translationDTO := TranslationDTO{}
 	if err := c.Bind(&translationDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := c.Validate(&translationDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 
 	exists, err := t.translationService.ExistsByCodeAndLangCode(translationDTO.Code, translationDTO.LangCode)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Translation could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation could not be saved."})
 	}
 	if exists {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Translation already exists with this code and language code."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Translation already exists with this code and language code."})
 	}
 
 	translation := data.Translation{
@@ -50,27 +50,27 @@ func (t *TranslationController) SaveTranslation(c echo.Context) error {
 
 	_, err = t.translationService.Save(translation)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusBadRequest, Message: "Translation could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation could not be saved."})
 	}
-	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
+	return c.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
 func (t *TranslationController) UpdateTranslation(c echo.Context) error {
 	translationDTO := TranslationDTO{}
 	if err := c.Bind(&translationDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := c.Validate(&translationDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 	id := c.Param("id")
 	exists, err := t.translationService.GetByCodeAndLangCode(translationDTO.Code, translationDTO.LangCode)
 	if err == nil && exists.ID != id {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Translation already exists with this code and language code."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Translation already exists with this code and language code."})
 	}
 	translation, err := t.translationService.GetByID(id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, &MessageResource{Code: http.StatusNotFound, Message: "Translation not found."})
+		return c.JSON(http.StatusNotFound, &MessageResource{Message: "Translation not found."})
 	}
 	translation.Code = translationDTO.Code
 	translation.LangCode = translationDTO.LangCode
@@ -79,15 +79,15 @@ func (t *TranslationController) UpdateTranslation(c echo.Context) error {
 	translation.Domain = translationDTO.Domain
 	_, err = t.translationService.Update(*translation)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Translation could not be updated."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation could not be updated."})
 	}
-	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
+	return c.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
 
 func (t *TranslationController) GetTranslations(c echo.Context) error {
 	translations, err := t.translationService.GetAll()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Translations could not be retrieved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translations could not be retrieved."})
 	}
 
 	translationResources := make([]TranslationResource, 0)
@@ -109,7 +109,7 @@ func (t *TranslationController) GetTranslation(c echo.Context) error {
 	id := c.Param("id")
 	translation, err := t.translationService.GetByID(id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, &MessageResource{Code: http.StatusNotFound, Message: "Translation not found."})
+		return c.JSON(http.StatusNotFound, &MessageResource{Message: "Translation not found."})
 	}
 
 	translationResource := TranslationResource{
@@ -128,7 +128,7 @@ func (t *TranslationController) DeleteTranslation(c echo.Context) error {
 	id := c.Param("id")
 	err := t.translationService.Delete(id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Translation could not be deleted."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation could not be deleted."})
 	}
 	return c.JSON(http.StatusNoContent, nil)
 }

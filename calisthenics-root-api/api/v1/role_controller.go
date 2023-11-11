@@ -27,18 +27,18 @@ func (u *RoleController) InitRoleRoutes(e *echo.Group) {
 func (u *RoleController) SaveRole(c echo.Context) error {
 	roleDTO := RoleDTO{}
 	if err := c.Bind(&roleDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := c.Validate(&roleDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 
 	exists, err := u.roleService.ExistsByCode(roleDTO.Code)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Role could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Role could not be saved."})
 	}
 	if exists {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Role already exists in this code."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Role already exists in this code."})
 	}
 
 	role := data.Role{
@@ -47,9 +47,9 @@ func (u *RoleController) SaveRole(c echo.Context) error {
 
 	_, err = u.roleService.Save(role)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Role could not be saved."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Role could not be saved."})
 	}
-	return c.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
+	return c.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
 func (u *RoleController) UpdateRole(c echo.Context) error {
@@ -60,31 +60,31 @@ func (u *RoleController) UpdateRole(c echo.Context) error {
 	}
 	roleDTO := RoleDTO{}
 	if err = c.Bind(&roleDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err = c.Validate(&roleDTO); err != nil {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 	exists, err := u.roleService.GetByCode(roleDTO.Code)
 	if err == nil && exists.ID != uint(idUint) {
-		return c.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Role already exists in this code."})
+		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Role already exists in this code."})
 	}
 	role, err := u.roleService.GetByID(uint(idUint))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, &MessageResource{Code: http.StatusNotFound, Message: "Role not found."})
+		return c.JSON(http.StatusNotFound, &MessageResource{Message: "Role not found."})
 	}
 	role.Code = roleDTO.Code
 	_, err = u.roleService.Update(*role)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Role could not be updated."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Role could not be updated."})
 	}
-	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
+	return c.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
 
 func (u *RoleController) GetRoles(c echo.Context) error {
 	roles, err := u.roleService.GetAll()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Roles could not be got."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Roles could not be got."})
 	}
 
 	var roleResources []RoleResource
@@ -106,7 +106,7 @@ func (u *RoleController) GetRole(c echo.Context) error {
 	}
 	role, err := u.roleService.GetByID(uint(idUint))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, &MessageResource{Code: http.StatusNotFound, Message: "Role not found."})
+		return c.JSON(http.StatusNotFound, &MessageResource{Message: "Role not found."})
 	}
 
 	privilegeResources := make([]PrivilegeResource, 0)
@@ -134,7 +134,7 @@ func (u *RoleController) DeleteRole(c echo.Context) error {
 	}
 	err = u.roleService.Delete(uint(idUint))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Roles could not be deleted."})
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Roles could not be deleted."})
 	}
 	return c.JSON(http.StatusNoContent, nil)
 }

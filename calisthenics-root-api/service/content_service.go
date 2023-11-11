@@ -3,16 +3,17 @@ package service
 import (
 	"calisthenics-root-api/data"
 	"calisthenics-root-api/data/repository"
+	"gorm.io/gorm"
 )
 
 type IContentService interface {
-	Save(content data.Content) (*data.Content, error)
+	Save(tx *gorm.DB, content data.Content) (*data.Content, error)
 	GetAll() ([]data.Content, error)
 	GetByID(id string) (*data.Content, error)
 	ExistsByCode(code string) (bool, error)
 	GetByCode(code string) (*data.Content, error)
-	Update(content data.Content) (*data.Content, error)
-	Delete(id string) error
+	Update(tx *gorm.DB, content data.Content) (*data.Content, error)
+	Delete(tx *gorm.DB, id string) error
 }
 
 type contentService struct {
@@ -23,8 +24,8 @@ func NewContentService(contentRepo repository.IContentRepository) IContentServic
 	return &contentService{contentRepository: contentRepo}
 }
 
-func (s *contentService) Save(content data.Content) (*data.Content, error) {
-	return s.contentRepository.Save(content)
+func (s *contentService) Save(tx *gorm.DB, content data.Content) (*data.Content, error) {
+	return s.contentRepository.Save(tx, content)
 }
 
 func (s *contentService) GetAll() ([]data.Content, error) {
@@ -43,10 +44,10 @@ func (s *contentService) GetByCode(code string) (*data.Content, error) {
 	return s.contentRepository.GetByCode(code)
 }
 
-func (s *contentService) Update(content data.Content) (*data.Content, error) {
-	return s.contentRepository.Update(content)
+func (s *contentService) Update(tx *gorm.DB, content data.Content) (*data.Content, error) {
+	return s.contentRepository.Update(tx, content)
 }
 
-func (s *contentService) Delete(id string) error {
-	return s.contentRepository.Delete(id)
+func (s *contentService) Delete(tx *gorm.DB, id string) error {
+	return s.contentRepository.Delete(tx, id)
 }

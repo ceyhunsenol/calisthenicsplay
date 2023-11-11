@@ -9,19 +9,19 @@ import (
 )
 
 type CacheController struct {
-	mediaOperations   service.IMediaOperations
-	contentOperations service.IContentOperations
-	genreOperations   service.IGenreOperations
+	mediaCacheOperations   service.IMediaCacheOperations
+	contentCacheOperations service.IContentCacheOperations
+	genreCacheOperations   service.IGenreCacheOperations
 }
 
-func NewCacheController(mediaOperations service.IMediaOperations,
-	contentOperations service.IContentOperations,
-	genreOperations service.IGenreOperations,
+func NewCacheController(mediaCacheOperations service.IMediaCacheOperations,
+	contentCacheOperations service.IContentCacheOperations,
+	genreCacheOperations service.IGenreCacheOperations,
 ) *CacheController {
 	return &CacheController{
-		mediaOperations:   mediaOperations,
-		contentOperations: contentOperations,
-		genreOperations:   genreOperations,
+		mediaCacheOperations:   mediaCacheOperations,
+		contentCacheOperations: contentCacheOperations,
+		genreCacheOperations:   genreCacheOperations,
 	}
 }
 
@@ -29,27 +29,59 @@ func (u *CacheController) InitCacheRoutes(e *echo.Echo) {
 	v1 := e.Group("/v1/cache")
 
 	v1.GET("/refresh-all", u.RefreshAll)
+	v1.GET("/refresh/:cacheType/:id", u.Refresh)
 }
 
 func (u *CacheController) RefreshAll(c echo.Context) error {
 	cacheTypes := c.QueryParams()["cacheType"]
 	if utils.Contains(cacheTypes, string(cache.Genre)) {
-		err := u.genreOperations.SaveCacheGenres()
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Unknown error"})
+		serviceError := u.genreCacheOperations.SaveCacheGenres()
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 		}
 	}
 	if utils.Contains(cacheTypes, string(cache.Content)) {
-		err := u.contentOperations.SaveCacheContents()
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Unknown error"})
+		serviceError := u.contentCacheOperations.SaveCacheContents()
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 		}
 	}
 	if utils.Contains(cacheTypes, string(cache.Media)) {
-		err := u.mediaOperations.SaveCacheMedias()
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Unknown error"})
+		serviceError := u.mediaCacheOperations.SaveCacheMedias()
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 		}
 	}
-	return c.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Cached all contents"})
+	return c.JSON(http.StatusOK, &MessageResource{Message: "Cached all contents"})
+}
+
+func (u *CacheController) Refresh(c echo.Context) error {
+	cacheType := c.Param("cacheType")
+	id := c.Param("id")
+
+	switch cacheType {
+	case string(cache.Genre):
+		cac, serviceError := u.genreCacheOperations.SaveCacheGenre(id)
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+		return c.JSON(http.StatusOK, cac)
+
+	case string(cache.Content):
+		cac, serviceError := u.contentCacheOperations.SaveCacheContent(id)
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+		return c.JSON(http.StatusOK, cac)
+
+	case string(cache.Media):
+		cac, serviceError := u.mediaCacheOperations.SaveCacheMedia(id)
+		if serviceError != nil {
+			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+		}
+		return c.JSON(http.StatusOK, cac)
+
+	default:
+		return c.JSON(http.StatusNotImplemented, &MessageResource{Message: "Not implemented"})
+	}
 }

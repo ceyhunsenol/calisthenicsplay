@@ -3,12 +3,13 @@ package service
 import (
 	"calisthenics-root-api/data"
 	"calisthenics-root-api/model"
+	"gorm.io/gorm"
 	"net/http"
 )
 
 type IContentTranslationOperations interface {
-	SaveContentTranslations(request model.ContentTranslationRequest) *model.ServiceError
-	DeleteAllContentTranslations(contentID string) *model.ServiceError
+	SaveContentTranslations(tx *gorm.DB, request model.ContentTranslationRequest) *model.ServiceError
+	DeleteAllContentTranslations(tx *gorm.DB, contentID string) *model.ServiceError
 }
 
 type contentTranslationOperations struct {
@@ -21,9 +22,10 @@ func NewContentTranslationOperations(contentTranslationService IContentTranslati
 	}
 }
 
-func (o *contentTranslationOperations) SaveContentTranslations(request model.ContentTranslationRequest) *model.ServiceError {
-	err := o.contentTranslationService.DeleteAllByContentID(request.ContentID)
+func (o *contentTranslationOperations) SaveContentTranslations(tx *gorm.DB, request model.ContentTranslationRequest) *model.ServiceError {
+	err := o.contentTranslationService.DeleteAllByContentID(tx, request.ContentID)
 	if err != nil {
+		tx.Rollback()
 		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "failed to translation process."}
 	}
 	for _, translation := range request.Translations {
@@ -34,17 +36,19 @@ func (o *contentTranslationOperations) SaveContentTranslations(request model.Con
 			Active:    translation.Active,
 			ContentID: request.ContentID,
 		}
-		_, err = o.contentTranslationService.Save(contentTranslation)
+		_, err = o.contentTranslationService.Save(tx, contentTranslation)
 		if err != nil {
+			tx.Rollback()
 			return &model.ServiceError{Code: http.StatusInternalServerError, Message: "failed to translation process."}
 		}
 	}
 	return nil
 }
 
-func (o *contentTranslationOperations) DeleteAllContentTranslations(contentID string) *model.ServiceError {
-	err := o.contentTranslationService.DeleteAllByContentID(contentID)
+func (o *contentTranslationOperations) DeleteAllContentTranslations(tx *gorm.DB, contentID string) *model.ServiceError {
+	err := o.contentTranslationService.DeleteAllByContentID(tx, contentID)
 	if err != nil {
+		tx.Rollback()
 		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "failed to translation process."}
 	}
 	return nil

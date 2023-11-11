@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"calisthenics-root-api/data"
 	"calisthenics-root-api/service"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -26,51 +25,51 @@ func (c *ContentTranslationController) InitContentTranslationRoutes(e *echo.Grou
 func (c *ContentTranslationController) SaveContentTranslation(ctx echo.Context) error {
 	contentTranslationDTO := ContentTranslationDTO{}
 	if err := ctx.Bind(&contentTranslationDTO); err != nil {
-		return ctx.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return ctx.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := ctx.Validate(&contentTranslationDTO); err != nil {
-		return ctx.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return ctx.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 
 	exists, err := c.contentTranslationService.ExistsByCodeAndLangCode(contentTranslationDTO.Code, contentTranslationDTO.LangCode)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content translation could not be saved."})
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content translation could not be saved."})
 	}
 	if exists {
-		return ctx.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Content translation already exists with this code and language code."})
+		return ctx.JSON(http.StatusBadRequest, &MessageResource{Message: "Content translation already exists with this code and language code."})
 	}
 
-	contentTranslation := data.ContentTranslation{
-		Code:      contentTranslationDTO.Code,
-		LangCode:  contentTranslationDTO.LangCode,
-		Translate: contentTranslationDTO.Translate,
-		Active:    contentTranslationDTO.Active,
-		ContentID: contentTranslationDTO.ContentID,
-	}
+	//contentTranslation := data.ContentTranslation{
+	//	Code:      contentTranslationDTO.Code,
+	//	LangCode:  contentTranslationDTO.LangCode,
+	//	Translate: contentTranslationDTO.Translate,
+	//	Active:    contentTranslationDTO.Active,
+	//	ContentID: contentTranslationDTO.ContentID,
+	//}
 
-	_, err = c.contentTranslationService.Save(contentTranslation)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusBadRequest, Message: "Content translation could not be saved."})
-	}
-	return ctx.JSON(http.StatusCreated, &MessageResource{Code: http.StatusCreated, Message: "Created."})
+	//_, err = c.contentTranslationService.Save(contentTranslation)
+	//if err != nil {
+	//	return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content translation could not be saved."})
+	//}
+	return ctx.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
 func (c *ContentTranslationController) UpdateContentTranslation(ctx echo.Context) error {
 	contentTranslationDTO := ContentTranslationDTO{}
 	if err := ctx.Bind(&contentTranslationDTO); err != nil {
-		return ctx.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Invalid request format."})
+		return ctx.JSON(http.StatusBadRequest, &MessageResource{Message: "Invalid request format."})
 	}
 	if err := ctx.Validate(&contentTranslationDTO); err != nil {
-		return ctx.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: err.Error()})
+		return ctx.JSON(http.StatusBadRequest, &MessageResource{Message: err.Error()})
 	}
 	id := ctx.Param("id")
 	exists, err := c.contentTranslationService.GetByCodeAndLangCode(contentTranslationDTO.Code, contentTranslationDTO.LangCode)
 	if err == nil && exists.ID != id {
-		return ctx.JSON(http.StatusBadRequest, &MessageResource{Code: http.StatusBadRequest, Message: "Content translation already exists with this code and language code."})
+		return ctx.JSON(http.StatusBadRequest, &MessageResource{Message: "Content translation already exists with this code and language code."})
 	}
 	contentTranslation, err := c.contentTranslationService.GetByID(id)
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, &MessageResource{Code: http.StatusNotFound, Message: "Content translation not found."})
+		return ctx.JSON(http.StatusNotFound, &MessageResource{Message: "Content translation not found."})
 	}
 	contentTranslation.Code = contentTranslationDTO.Code
 	contentTranslation.LangCode = contentTranslationDTO.LangCode
@@ -79,15 +78,15 @@ func (c *ContentTranslationController) UpdateContentTranslation(ctx echo.Context
 	contentTranslation.ContentID = contentTranslationDTO.ContentID
 	_, err = c.contentTranslationService.Update(*contentTranslation)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Translation content could not be updated."})
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation content could not be updated."})
 	}
-	return ctx.JSON(http.StatusOK, &MessageResource{Code: http.StatusOK, Message: "Updated."})
+	return ctx.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
 
 func (c *ContentTranslationController) GetContentTranslations(ctx echo.Context) error {
 	contentTranslations, err := c.contentTranslationService.GetAll()
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content translations could not be retrieved."})
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content translations could not be retrieved."})
 	}
 
 	contentTranslationResources := make([]ContentTranslationResource, 0)
@@ -109,7 +108,7 @@ func (c *ContentTranslationController) GetContentTranslation(ctx echo.Context) e
 	id := ctx.Param("id")
 	contentTranslation, err := c.contentTranslationService.GetByID(id)
 	if err != nil {
-		return ctx.JSON(http.StatusNotFound, &MessageResource{Code: http.StatusNotFound, Message: "Content translation not found."})
+		return ctx.JSON(http.StatusNotFound, &MessageResource{Message: "Content translation not found."})
 	}
 
 	contentTranslationResource := ContentTranslationResource{
@@ -128,7 +127,7 @@ func (c *ContentTranslationController) DeleteContentTranslation(ctx echo.Context
 	id := ctx.Param("id")
 	err := c.contentTranslationService.Delete(id)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Code: http.StatusInternalServerError, Message: "Content translation could not be deleted."})
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content translation could not be deleted."})
 	}
 	return ctx.JSON(http.StatusNoContent, nil)
 }

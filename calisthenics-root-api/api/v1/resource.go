@@ -19,7 +19,6 @@ func NewTokenResource(username, accessToken, refreshToken string) *TokenResource
 
 // MessageResource resource
 type MessageResource struct {
-	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 

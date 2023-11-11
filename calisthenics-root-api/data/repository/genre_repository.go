@@ -6,13 +6,13 @@ import (
 )
 
 type IGenreRepository interface {
-	Save(genre data.Genre) (*data.Genre, error)
+	Save(tx *gorm.DB, genre data.Genre) (*data.Genre, error)
 	GetAll() ([]data.Genre, error)
 	GetByID(id string) (*data.Genre, error)
 	GetByCode(code string) (*data.Genre, error)
 	ExistsByCode(code string) (bool, error)
-	Update(genre data.Genre) (*data.Genre, error)
-	Delete(id string) error
+	Update(tx *gorm.DB, genre data.Genre) (*data.Genre, error)
+	Delete(tx *gorm.DB, id string) error
 }
 
 type genreRepository struct {
@@ -23,8 +23,8 @@ func NewGenreRepository(db *gorm.DB) IGenreRepository {
 	return &genreRepository{DB: db}
 }
 
-func (r *genreRepository) Save(genre data.Genre) (*data.Genre, error) {
-	result := r.DB.Create(&genre)
+func (r *genreRepository) Save(tx *gorm.DB, genre data.Genre) (*data.Genre, error) {
+	result := tx.Create(&genre)
 	return &genre, result.Error
 }
 
@@ -54,14 +54,14 @@ func (r *genreRepository) ExistsByCode(code string) (bool, error) {
 	return count > 0, nil
 }
 
-func (r *genreRepository) Update(genre data.Genre) (*data.Genre, error) {
-	result := r.DB.Updates(&genre)
+func (r *genreRepository) Update(tx *gorm.DB, genre data.Genre) (*data.Genre, error) {
+	result := tx.Updates(&genre)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &genre, nil
 }
 
-func (r *genreRepository) Delete(id string) error {
-	return r.DB.Delete(&data.Genre{}, "id = ?", id).Error
+func (r *genreRepository) Delete(tx *gorm.DB, id string) error {
+	return tx.Delete(&data.Genre{}, "id = ?", id).Error
 }
