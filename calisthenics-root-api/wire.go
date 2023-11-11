@@ -39,6 +39,8 @@ var RepositorySet = wire.NewSet(
 	repository.NewGenreContentRepository,
 	repository.NewTranslationRepository,
 	repository.NewContentTranslationRepository,
+	repository.NewContentAccessRepository,
+	repository.NewMediaAccessRepository,
 )
 
 var DomainServiceSet = wire.NewSet(
@@ -54,6 +56,8 @@ var DomainServiceSet = wire.NewSet(
 	service.NewGenreContentService,
 	service.NewTranslationService,
 	service.NewContentTranslationService,
+	service.NewContentAccessService,
+	service.NewMediaAccessService,
 )
 
 var ServiceSet = wire.NewSet(
@@ -76,6 +80,8 @@ var ControllerSet = wire.NewSet(
 	v1.NewGenreController,
 	v1.NewTranslationController,
 	v1.NewContentTranslationController,
+	v1.NewContentAccessController,
+	v1.NewMediaAccessController,
 )
 
 func InitializeApp() *echo.Echo {
@@ -91,7 +97,7 @@ func NewDatabase() *gorm.DB {
 	if err != nil {
 		panic("Failed to connect to the database")
 	}
-	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{}, &data.Translation{}, &data.ContentTranslation{})
+	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{}, &data.Translation{}, &data.ContentTranslation{}, &data.GeneralInfo{}, &data.ContentAccess{}, &data.MediaAccess{})
 	if err != nil {
 		panic("Failed to migrate database")
 	}
@@ -108,7 +114,9 @@ func InitRoutes(
 	genreTypeController *v1.GenreTypeController,
 	genreController *v1.GenreController,
 	translationController *v1.TranslationController,
-	contentTanslationController *v1.ContentTranslationController,
+	contentTranslationController *v1.ContentTranslationController,
+	contentAccessController *v1.ContentAccessController,
+	mediaAccessController *v1.MediaAccessController,
 	userService service.IUserService) *echo.Echo {
 
 	e := echo.New()
@@ -142,7 +150,12 @@ func InitRoutes(
 	translationController.InitTranslationRoutes(middlewareGroup)
 
 	middlewareGroup = e.Group("/v1/content-translations", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
-	contentTanslationController.InitContentTranslationRoutes(middlewareGroup)
+	contentTranslationController.InitContentTranslationRoutes(middlewareGroup)
 
+	middlewareGroup = e.Group("/v1/content-access", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	contentAccessController.InitContentAccessRoutes(middlewareGroup)
+
+	middlewareGroup = e.Group("/v1/media-access", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	mediaAccessController.InitMediaAccessRoutes(middlewareGroup)
 	return e
 }

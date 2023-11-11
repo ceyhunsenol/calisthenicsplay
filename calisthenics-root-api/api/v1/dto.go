@@ -89,3 +89,15 @@ type ContentTranslationDTO struct {
 	Active    bool   `json:"active"`
 	ContentID string `json:"contentID"`
 }
+
+// ContentAccessDTO DTO
+type ContentAccessDTO struct {
+	ContentID string `json:"contentID" validate:"required"`
+	Audience  string `json:"audience" validate:"required"`
+}
+
+// MediaAccessDTO DTO
+type MediaAccessDTO struct {
+	MediaID  string `json:"mediaID" validate:"required"`
+	Audience string `json:"audience" validate:"required"`
+}

@@ -68,7 +68,13 @@ func InitializeApp() *echo.Echo {
 	iTranslationService := service.NewTranslationService(iTranslationRepository)
 	translationController := v1.NewTranslationController(iTranslationService)
 	contentTranslationController := v1.NewContentTranslationController(iContentTranslationService)
-	echoEcho := InitRoutes(authController, userController, roleController, privilegeController, contentController, mediaController, genreTypeController, genreController, translationController, contentTranslationController, iUserService)
+	iContentAccessRepository := repository.NewContentAccessRepository(db)
+	iContentAccessService := service.NewContentAccessService(iContentAccessRepository)
+	contentAccessController := v1.NewContentAccessController(iContentAccessService)
+	iMediaAccessRepository := repository.NewMediaAccessRepository(db)
+	iMediaAccessService := service.NewMediaAccessService(iMediaAccessRepository)
+	mediaAccessController := v1.NewMediaAccessController(iMediaAccessService)
+	echoEcho := InitRoutes(authController, userController, roleController, privilegeController, contentController, mediaController, genreTypeController, genreController, translationController, contentTranslationController, contentAccessController, mediaAccessController, iUserService)
 	return echoEcho
 }
 
@@ -78,13 +84,13 @@ var GeneralSet = wire.NewSet(NewDatabase, InitRoutes)
 
 var IntegrationSet = wire.NewSet(calisthenics.NewCalisthenicsContentService)
 
-var RepositorySet = wire.NewSet(repository.NewUserRepository, repository.NewPrivilegeRepository, repository.NewRoleRepository, repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreTypeRepository, repository.NewGenreRepository, repository.NewHelperContentRepository, repository.NewRequirementContentRepository, repository.NewGenreContentRepository, repository.NewTranslationRepository, repository.NewContentTranslationRepository)
+var RepositorySet = wire.NewSet(repository.NewUserRepository, repository.NewPrivilegeRepository, repository.NewRoleRepository, repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreTypeRepository, repository.NewGenreRepository, repository.NewHelperContentRepository, repository.NewRequirementContentRepository, repository.NewGenreContentRepository, repository.NewTranslationRepository, repository.NewContentTranslationRepository, repository.NewContentAccessRepository, repository.NewMediaAccessRepository)
 
-var DomainServiceSet = wire.NewSet(service.NewUserService, service.NewPrivilegeService, service.NewRoleService, service.NewContentService, service.NewMediaService, service.NewHelperContentService, service.NewRequirementContentService, service.NewGenreTypeService, service.NewGenreService, service.NewGenreContentService, service.NewTranslationService, service.NewContentTranslationService)
+var DomainServiceSet = wire.NewSet(service.NewUserService, service.NewPrivilegeService, service.NewRoleService, service.NewContentService, service.NewMediaService, service.NewHelperContentService, service.NewRequirementContentService, service.NewGenreTypeService, service.NewGenreService, service.NewGenreContentService, service.NewTranslationService, service.NewContentTranslationService, service.NewContentAccessService, service.NewMediaAccessService)
 
 var ServiceSet = wire.NewSet(service.NewAuthService, service.NewHelperContentOperations, service.NewRequirementContentOperations, service.NewGenreContentOperations, service.NewContentTranslationOperations, service.NewCacheRequestService)
 
-var ControllerSet = wire.NewSet(v1.NewAuthController, v1.NewUserController, v1.NewRoleController, v1.NewPrivilegeController, v1.NewContentController, v1.NewMediaController, v1.NewGenreTypeController, v1.NewGenreController, v1.NewTranslationController, v1.NewContentTranslationController)
+var ControllerSet = wire.NewSet(v1.NewAuthController, v1.NewUserController, v1.NewRoleController, v1.NewPrivilegeController, v1.NewContentController, v1.NewMediaController, v1.NewGenreTypeController, v1.NewGenreController, v1.NewTranslationController, v1.NewContentTranslationController, v1.NewContentAccessController, v1.NewMediaAccessController)
 
 func NewDatabase() *gorm.DB {
 	dbUser := viper.GetString("database.user")
@@ -94,7 +100,7 @@ func NewDatabase() *gorm.DB {
 	if err != nil {
 		panic("Failed to connect to the database")
 	}
-	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{}, &data.Translation{}, &data.ContentTranslation{})
+	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{}, &data.Translation{}, &data.ContentTranslation{}, &data.GeneralInfo{}, &data.ContentAccess{}, &data.MediaAccess{})
 	if err != nil {
 		panic("Failed to migrate database")
 	}
@@ -111,7 +117,9 @@ func InitRoutes(
 	genreTypeController *v1.GenreTypeController,
 	genreController *v1.GenreController,
 	translationController *v1.TranslationController,
-	contentTanslationController *v1.ContentTranslationController,
+	contentTranslationController *v1.ContentTranslationController,
+	contentAccessController *v1.ContentAccessController,
+	mediaAccessController *v1.MediaAccessController,
 	userService service.IUserService) *echo.Echo {
 
 	e := echo.New()
@@ -145,7 +153,12 @@ func InitRoutes(
 	translationController.InitTranslationRoutes(middlewareGroup)
 
 	middlewareGroup = e.Group("/v1/content-translations", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
-	contentTanslationController.InitContentTranslationRoutes(middlewareGroup)
+	contentTranslationController.InitContentTranslationRoutes(middlewareGroup)
 
+	middlewareGroup = e.Group("/v1/content-access", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	contentAccessController.InitContentAccessRoutes(middlewareGroup)
+
+	middlewareGroup = e.Group("/v1/media-access", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	mediaAccessController.InitMediaAccessRoutes(middlewareGroup)
 	return e
 }

@@ -107,3 +107,17 @@ type ContentTranslationResource struct {
 	Active    bool   `json:"active"`
 	ContentID string `json:"contentID"`
 }
+
+// ContentAccessResource Resource
+type ContentAccessResource struct {
+	ID        string `json:"id"`
+	ContentID string `json:"contentID"`
+	Audience  string `json:"audience"`
+}
+
+// MediaAccessResource Resource
+type MediaAccessResource struct {
+	ID       string `json:"id"`
+	MediaID  string `json:"mediaID"`
+	Audience string `json:"audience"`
+}
