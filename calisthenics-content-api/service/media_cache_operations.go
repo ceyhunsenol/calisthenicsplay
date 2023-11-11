@@ -38,15 +38,13 @@ func (o *mediaCacheOperations) SaveCacheMedias() *model.ServiceError {
 	})
 
 	for key, value := range grouped {
-		content, err := o.contentService.GetByID(key)
-		if err != nil || content.Active {
+		content, contentError := o.contentService.GetByID(key)
+		if contentError == nil && content.Active {
 			continue
 		}
 
-		if !content.Active {
-			for _, media := range value {
-				media.Active = false
-			}
+		for _, media := range value {
+			media.Active = false
 		}
 	}
 

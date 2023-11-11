@@ -8,6 +8,7 @@ import (
 type IMediaService interface {
 	GetAll() ([]*data.Media, error)
 	GetByID(id string) (*data.Media, error)
+	GetAllByContentID(contentID string) ([]data.Media, error)
 }
 
 type mediaService struct {
@@ -24,4 +25,8 @@ func (s *mediaService) GetAll() ([]*data.Media, error) {
 
 func (s *mediaService) GetByID(id string) (*data.Media, error) {
 	return s.mediaRepository.GetByID(id)
+}
+
+func (s *mediaService) GetAllByContentID(contentID string) ([]data.Media, error) {
+	return s.mediaRepository.GetAllByContentID(contentID)
 }

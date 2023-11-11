@@ -51,6 +51,12 @@ func (c *cacheRequestService) ContentRefreshRequest(ID string) *model.ServiceErr
 }
 
 func (c *cacheRequestService) ContentWithMediasRefreshRequest(ID string) *model.ServiceError {
+	errorResponse := c.ContentRefreshRequest(ID)
+	if errorResponse != nil {
+		return &model.ServiceError{
+			Message: errorResponse.Message,
+		}
+	}
 	return nil
 }
 

@@ -30,6 +30,7 @@ func (u *CacheController) InitCacheRoutes(e *echo.Echo) {
 
 	v1.GET("/refresh-all", u.RefreshAll)
 	v1.GET("/refresh/:cacheType/:id", u.Refresh)
+	v1.GET("/refresh/content-with-medias/:id", u.RefreshContentWithMedias)
 }
 
 func (u *CacheController) RefreshAll(c echo.Context) error {
@@ -84,4 +85,13 @@ func (u *CacheController) Refresh(c echo.Context) error {
 	default:
 		return c.JSON(http.StatusNotImplemented, &MessageResource{Message: "Not implemented"})
 	}
+}
+
+func (u *CacheController) RefreshContentWithMedias(c echo.Context) error {
+	id := c.Param("id")
+	serviceError := u.contentCacheOperations.SaveCacheContentWithMedias(id)
+	if serviceError != nil {
+		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
+	}
+	return c.JSON(http.StatusOK, &MessageResource{Message: "Cached"})
 }

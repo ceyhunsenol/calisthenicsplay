@@ -8,6 +8,7 @@ import (
 type IMediaRepository interface {
 	GetAll() ([]*data.Media, error)
 	GetByID(id string) (*data.Media, error)
+	GetAllByContentID(contentID string) ([]data.Media, error)
 }
 
 type mediaRepository struct {
@@ -28,4 +29,10 @@ func (r *mediaRepository) GetByID(id string) (*data.Media, error) {
 	var media data.Media
 	result := r.DB.Where("id = ?", id).First(&media)
 	return &media, result.Error
+}
+
+func (r *mediaRepository) GetAllByContentID(contentID string) ([]data.Media, error) {
+	var medias []data.Media
+	result := r.DB.Where("content_id = ?", contentID).Find(&medias)
+	return medias, result.Error
 }

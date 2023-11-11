@@ -2,6 +2,7 @@ package calisthenics
 
 import (
 	"encoding/json"
+	"github.com/spf13/viper"
 	"io"
 	"net/http"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 
 type ICalisthenicsContentService interface {
 	Refresh(request RefreshRequest) *ErrorResponse
+	RefreshWithMedias(contentID string) *ErrorResponse
 }
 
 type calisthenicsContentService struct {
@@ -16,8 +18,7 @@ type calisthenicsContentService struct {
 }
 
 func NewCalisthenicsContentService() ICalisthenicsContentService {
-	//baseURLString := viper.GetString("integration.calisthenics.content")
-	baseURLString := "http://localhost:1322"
+	baseURLString := viper.GetString("integration.calisthenics.content")
 	baseURL, _ := url.Parse(baseURLString)
 	return &calisthenicsContentService{
 		baseURL: *baseURL,
@@ -32,7 +33,31 @@ func (c *calisthenicsContentService) Refresh(request RefreshRequest) *ErrorRespo
 	}
 	defer response.Body.Close()
 
-	// Yanıtın içeriğini oku
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return &ErrorResponse{Message: "IO error"}
+	}
+
+	var errorResponse ErrorResponse
+	err = json.Unmarshal(body, &errorResponse)
+	if err != nil {
+		return &ErrorResponse{Message: "Deserialization error"}
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return &ErrorResponse{Message: errorResponse.Message}
+	}
+	return nil
+}
+
+func (c *calisthenicsContentService) RefreshWithMedias(contentID string) *ErrorResponse {
+	requestURL := c.baseURL.JoinPath("v1/cache/refresh-with-medias", contentID)
+	response, err := http.Get(requestURL.String())
+	if err != nil {
+		return &ErrorResponse{Message: "Request error"}
+	}
+	defer response.Body.Close()
+
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return &ErrorResponse{Message: "IO error"}
