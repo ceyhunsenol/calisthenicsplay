@@ -51,7 +51,7 @@ func (c *calisthenicsContentService) Refresh(request RefreshRequest) *ErrorRespo
 }
 
 func (c *calisthenicsContentService) RefreshWithMedias(contentID string) *ErrorResponse {
-	requestURL := c.baseURL.JoinPath("v1/cache/refresh-with-medias", contentID)
+	requestURL := c.baseURL.JoinPath("v1/cache/refresh/content-with-medias", contentID)
 	response, err := http.Get(requestURL.String())
 	if err != nil {
 		return &ErrorResponse{Message: "Request error"}

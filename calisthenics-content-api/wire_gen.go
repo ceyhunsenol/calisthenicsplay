@@ -34,7 +34,7 @@ func InitializeApp() *echo.Echo {
 	iContentService := service.NewContentService(iContentRepository)
 	iMediaCacheOperations := service.NewMediaCacheOperations(iMediaService, iMediaCacheService, iContentService)
 	iContentCacheService := cache.NewContentCacheService(iCacheService)
-	iContentCacheOperations := service.NewContentCacheOperations(iContentService, iContentCacheService)
+	iContentCacheOperations := service.NewContentCacheOperations(iContentService, iContentCacheService, iMediaService, iMediaCacheService)
 	iGenreRepository := repository.NewGenreRepository(db)
 	iGenreService := service.NewGenreService(iGenreRepository)
 	iGenreCacheService := cache.NewGenreCacheService(iCacheService)

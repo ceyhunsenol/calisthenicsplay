@@ -30,7 +30,7 @@ type MediaDTO struct {
 	URL             string           `json:"url" validate:"required"`
 	Type            string           `json:"type" validate:"required"`
 	ContentID       string           `json:"contentID" validate:"required"`
-	Active          bool             `json:"active" validate:"required"`
+	Active          bool             `json:"active"`
 	Translations    []TranslationDTO `json:"translations"`
 }
 
@@ -38,7 +38,7 @@ type MediaDTO struct {
 type ContentDTO struct {
 	Code         string           `json:"code" validate:"required"`
 	Description  string           `json:"description"`
-	Active       bool             `json:"active" validate:"required"`
+	Active       bool             `json:"active"`
 	Translations []TranslationDTO `json:"translations"`
 }
 
@@ -68,7 +68,7 @@ type GenreDTO struct {
 	Code         string                  `json:"code" validate:"required"`
 	Description  string                  `json:"description"`
 	Section      string                  `json:"section"`
-	Active       bool                    `json:"active" validate:"required"`
+	Active       bool                    `json:"active"`
 	Translations []ContentTranslationDTO `json:"translations"`
 }
 
@@ -77,7 +77,7 @@ type TranslationDTO struct {
 	Code      string `json:"code" validate:"required"`
 	LangCode  string `json:"langCode" validate:"required"`
 	Translate string `json:"translate" validate:"required"`
-	Active    bool   `json:"active" validate:"required"`
+	Active    bool   `json:"active"`
 	Domain    string `json:"domain" validate:"required"`
 }
 
