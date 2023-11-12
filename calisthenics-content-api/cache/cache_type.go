@@ -1,12 +1,12 @@
 package cache
 
-type Type string
+type CacheType string
 
 const (
-	Genre         Type = "genre"
-	Content       Type = "content"
-	Media         Type = "media"
-	GeneralInfo   Type = "general_info"
-	ContentAccess Type = "content_access"
-	MediaAccess   Type = "media_access"
+	Genre         CacheType = "genre"
+	Content       CacheType = "content"
+	Media         CacheType = "media"
+	GeneralInfo   CacheType = "general_info"
+	ContentAccess CacheType = "content_access"
+	MediaAccess   CacheType = "media_access"
 )

@@ -8,7 +8,7 @@ import (
 
 type IContentAccessCacheOperations interface {
 	SaveCacheContentAccessList() *model.ServiceError
-	SaveCacheContentAccess(ID string) (cache.ContentAccessCache, *model.ServiceError)
+	SaveCacheContentAccess(ID string) *cache.ContentAccessCache
 }
 
 type contentAccessCacheOperations struct {
@@ -27,6 +27,7 @@ func NewContentAccessCacheOperations(
 }
 
 func (o *contentAccessCacheOperations) SaveCacheContentAccessList() *model.ServiceError {
+	o.contentAccessCacheService.RemoveAll()
 	contentAccessList, err := o.contentAccessService.GetAll()
 	if err != nil {
 		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
@@ -35,7 +36,6 @@ func (o *contentAccessCacheOperations) SaveCacheContentAccessList() *model.Servi
 	contentAccessCache := make([]cache.ContentAccessCache, 0)
 	for _, value := range contentAccessList {
 		cac := cache.ContentAccessCache{
-			ID:        value.ID,
 			ContentID: value.ContentID,
 			Audience:  value.Audience,
 		}
@@ -45,15 +45,16 @@ func (o *contentAccessCacheOperations) SaveCacheContentAccessList() *model.Servi
 	return nil
 }
 
-func (o *contentAccessCacheOperations) SaveCacheContentAccess(ID string) (cache.ContentAccessCache, *model.ServiceError) {
+func (o *contentAccessCacheOperations) SaveCacheContentAccess(ID string) *cache.ContentAccessCache {
+	o.contentAccessCacheService.Remove(ID)
 	access, err := o.contentAccessService.GetByID(ID)
 	if err != nil {
-		return cache.ContentAccessCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
+		return nil
 	}
 	accessCache := cache.ContentAccessCache{
 		ContentID: access.ContentID,
 		Audience:  access.Audience,
 	}
 	o.contentAccessCacheService.Save(accessCache)
-	return accessCache, nil
+	return &accessCache
 }

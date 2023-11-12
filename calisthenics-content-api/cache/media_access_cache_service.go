@@ -31,17 +31,17 @@ func NewMediaAccessCacheService(cacheService ICacheService) IMediaAccessCacheSer
 }
 
 func (c *mediaAccessCacheService) Save(cache MediaAccessCache) {
-	c.Remove(cache.ID)
-	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.ID), cache)
+	c.Remove(cache.MediaID)
+	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.MediaID), cache)
 }
 
 func (c *mediaAccessCacheService) SaveAllSlice(caches []MediaAccessCache) {
 	for _, value := range caches {
-		c.Remove(value.ID)
+		c.Remove(value.MediaID)
 	}
 
 	for _, value := range caches {
-		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.ID), value)
+		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.MediaID), value)
 	}
 }
 

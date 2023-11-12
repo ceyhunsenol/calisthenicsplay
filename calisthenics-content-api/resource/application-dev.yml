@@ -2,3 +2,7 @@ database:
   user: postgres
   password: 0day
   name: calisthenics
+
+integration:
+  calisthenics:
+    auth: http://localhost:1323

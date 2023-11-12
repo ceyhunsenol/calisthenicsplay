@@ -89,45 +89,27 @@ func (u *CacheController) Refresh(c echo.Context) error {
 
 	switch cacheType {
 	case string(cache.Genre):
-		cac, serviceError := u.genreCacheOperations.SaveCacheGenre(id)
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
+		cac := u.genreCacheOperations.SaveCacheGenre(id)
 		return c.JSON(http.StatusOK, cac)
 
 	case string(cache.Content):
-		cac, serviceError := u.contentCacheOperations.SaveCacheContent(id)
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
+		cac := u.contentCacheOperations.SaveCacheContent(id)
 		return c.JSON(http.StatusOK, cac)
 
 	case string(cache.Media):
-		cac, serviceError := u.mediaCacheOperations.SaveCacheMedia(id)
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
+		cac := u.mediaCacheOperations.SaveCacheMedia(id)
 		return c.JSON(http.StatusOK, cac)
 
 	case string(cache.GeneralInfo):
-		cac, serviceError := u.generalInfoCacheOperations.SaveCacheGeneralInfo(id)
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
+		cac := u.generalInfoCacheOperations.SaveCacheGeneralInfo(id)
 		return c.JSON(http.StatusOK, cac)
 
 	case string(cache.ContentAccess):
-		cac, serviceError := u.contentAccessCacheOperations.SaveCacheContentAccess(id)
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
+		cac := u.contentAccessCacheOperations.SaveCacheContentAccess(id)
 		return c.JSON(http.StatusOK, cac)
 
 	case string(cache.MediaAccess):
-		cac, serviceError := u.mediaAccessCacheOperations.SaveCacheMediaAccess(id)
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
+		cac := u.mediaAccessCacheOperations.SaveCacheMediaAccess(id)
 		return c.JSON(http.StatusOK, cac)
 
 	default:

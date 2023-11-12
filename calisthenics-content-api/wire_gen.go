@@ -11,6 +11,8 @@ import (
 	"calisthenics-content-api/cache"
 	"calisthenics-content-api/config"
 	"calisthenics-content-api/data/repository"
+	"calisthenics-content-api/integration/calisthenics"
+	"calisthenics-content-api/job"
 	"calisthenics-content-api/middleware"
 	"calisthenics-content-api/service"
 	"fmt"
@@ -51,27 +53,33 @@ func InitializeApp() *echo.Echo {
 	iMediaAccessRepository := repository.NewMediaAccessRepository(db)
 	iMediaAccessService := service.NewMediaAccessService(iMediaAccessRepository)
 	iMediaAccessCacheOperations := service.NewMediaAccessCacheOperations(iMediaAccessCacheService, iMediaAccessService)
-	cacheController := api.NewCacheController(iMediaCacheOperations, iContentCacheOperations, iGenreCacheOperations, iGeneralInfoCacheOperations, iContentAccessCacheOperations, iMediaAccessCacheOperations)
+	iLimitedCacheService := cache.NewLimitedCacheService(iCacheService)
+	iCalisthenicsAuthService := calisthenics.NewCalisthenicsAuthService(iLimitedCacheService)
+	iMediaPlayActionService := service.NewMediaPlayActionService(iGeneralInfoCacheService, iContentAccessCacheService, iMediaAccessCacheService, iCalisthenicsAuthService, iMediaCacheService)
+	cacheController := api.NewCacheController(iMediaCacheOperations, iContentCacheOperations, iGenreCacheOperations, iGeneralInfoCacheOperations, iContentAccessCacheOperations, iMediaAccessCacheOperations, iMediaPlayActionService, iMediaCacheService)
 	iGenreOperations := service.NewGenreOperations(iGenreService, iGenreCacheService)
 	genreController := api.NewGenreController(iGenreOperations)
 	iContentOperations := service.NewContentOperations(iContentService, iContentCacheService)
 	contentController := api.NewContentController(iContentOperations)
-	iInitCacheService := service.NewInitCacheService(iContentCacheOperations, iGenreCacheOperations, iMediaCacheOperations)
-	echoEcho := InitRoutes(cacheController, genreController, contentController, iInitCacheService)
+	iJobService := job.NewJobService(iLimitedCacheService)
+	iInitService := service.NewInitService(iContentCacheOperations, iGenreCacheOperations, iMediaCacheOperations, iContentAccessCacheOperations, iGeneralInfoCacheOperations, iMediaAccessCacheOperations, iJobService)
+	echoEcho := InitRoutes(cacheController, genreController, contentController, iInitService)
 	return echoEcho
 }
 
 // wire.go:
 
-var GeneralSet = wire.NewSet(NewDatabase, InitRoutes, cache.NewCacheManager)
+var GeneralSet = wire.NewSet(NewDatabase, InitRoutes, cache.NewCacheManager, job.NewJobService)
+
+var IntegrationSet = wire.NewSet(calisthenics.NewCalisthenicsAuthService)
 
 var RepositorySet = wire.NewSet(repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreRepository, repository.NewGeneralInfoRepository, repository.NewContentAccessRepository, repository.NewMediaAccessRepository)
 
-var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService, service.NewInitCacheService, service.NewGeneralInfoService, service.NewContentAccessService, service.NewMediaAccessService)
+var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService, service.NewInitService, service.NewGeneralInfoService, service.NewContentAccessService, service.NewMediaAccessService)
 
-var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCacheService, cache.NewGenreCacheService, cache.NewGeneralInfoCacheService, cache.NewMediaAccessCacheService, cache.NewContentAccessCacheService)
+var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCacheService, cache.NewGenreCacheService, cache.NewGeneralInfoCacheService, cache.NewMediaAccessCacheService, cache.NewContentAccessCacheService, cache.NewLimitedCacheService)
 
-var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations, service.NewMediaCacheOperations, service.NewContentCacheOperations, service.NewGenreCacheOperations, service.NewGeneralInfoCacheOperations, service.NewContentAccessCacheOperations, service.NewMediaAccessCacheOperations)
+var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations, service.NewMediaCacheOperations, service.NewContentCacheOperations, service.NewGenreCacheOperations, service.NewGeneralInfoCacheOperations, service.NewContentAccessCacheOperations, service.NewMediaAccessCacheOperations, service.NewMediaPlayActionService)
 
 var ControllerSet = wire.NewSet(api.NewCacheController, api.NewGenreController, api.NewContentController)
 
@@ -94,13 +102,14 @@ func InitRoutes(
 	cacheController *api.CacheController,
 	genreController *api.GenreController,
 	contentController *api.ContentController,
-	initCacheService service.IInitCacheService,
+	initService service.IInitService,
 ) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.ServiceContextMiddleware)
 	cacheController.InitCacheRoutes(e)
 	genreController.InitGenreRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
-	initCacheService.InitCache()
+	initService.InitCache()
+	go initService.InitJob()
 	return e
 }

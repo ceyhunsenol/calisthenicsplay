@@ -3,6 +3,7 @@ package service
 import (
 	"calisthenics-root-api/data"
 	"calisthenics-root-api/data/repository"
+	"gorm.io/gorm"
 )
 
 type IContentAccessService interface {
@@ -13,6 +14,7 @@ type IContentAccessService interface {
 	GetByContentID(contentID string) (*data.ContentAccess, error)
 	Update(contentAccess data.ContentAccess) (*data.ContentAccess, error)
 	Delete(id string) error
+	DeleteAllByContentID(tx *gorm.DB, contentID string) error
 }
 
 type contentAccessService struct {
@@ -49,4 +51,8 @@ func (s *contentAccessService) Update(contentAccess data.ContentAccess) (*data.C
 
 func (s *contentAccessService) Delete(id string) error {
 	return s.contentAccessRepository.Delete(id)
+}
+
+func (s *contentAccessService) DeleteAllByContentID(tx *gorm.DB, contentID string) error {
+	return s.contentAccessRepository.DeleteAllByContentID(tx, contentID)
 }

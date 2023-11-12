@@ -8,6 +8,8 @@ import (
 	"calisthenics-content-api/cache"
 	"calisthenics-content-api/config"
 	"calisthenics-content-api/data/repository"
+	"calisthenics-content-api/integration/calisthenics"
+	"calisthenics-content-api/job"
 	"calisthenics-content-api/middleware"
 	"calisthenics-content-api/service"
 	"fmt"
@@ -19,7 +21,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var GeneralSet = wire.NewSet(NewDatabase, InitRoutes, cache.NewCacheManager)
+var GeneralSet = wire.NewSet(NewDatabase, InitRoutes, cache.NewCacheManager, job.NewJobService)
+
+var IntegrationSet = wire.NewSet(
+	calisthenics.NewCalisthenicsAuthService,
+)
 
 var RepositorySet = wire.NewSet(
 	repository.NewContentRepository,
@@ -34,7 +40,7 @@ var DomainServiceSet = wire.NewSet(
 	service.NewContentService,
 	service.NewMediaService,
 	service.NewGenreService,
-	service.NewInitCacheService,
+	service.NewInitService,
 	service.NewGeneralInfoService,
 	service.NewContentAccessService,
 	service.NewMediaAccessService,
@@ -47,6 +53,7 @@ var CacheServiceSet = wire.NewSet(
 	cache.NewGeneralInfoCacheService,
 	cache.NewMediaAccessCacheService,
 	cache.NewContentAccessCacheService,
+	cache.NewLimitedCacheService,
 )
 
 var ServiceSet = wire.NewSet(
@@ -59,6 +66,7 @@ var ServiceSet = wire.NewSet(
 	service.NewGeneralInfoCacheOperations,
 	service.NewContentAccessCacheOperations,
 	service.NewMediaAccessCacheOperations,
+	service.NewMediaPlayActionService,
 )
 
 var ControllerSet = wire.NewSet(
@@ -68,7 +76,7 @@ var ControllerSet = wire.NewSet(
 )
 
 func InitializeApp() *echo.Echo {
-	wire.Build(GeneralSet, RepositorySet, DomainServiceSet, CacheServiceSet, ServiceSet, ControllerSet)
+	wire.Build(GeneralSet, RepositorySet, DomainServiceSet, CacheServiceSet, ServiceSet, ControllerSet, IntegrationSet)
 	return &echo.Echo{}
 }
 
@@ -91,13 +99,14 @@ func InitRoutes(
 	cacheController *api.CacheController,
 	genreController *api.GenreController,
 	contentController *api.ContentController,
-	initCacheService service.IInitCacheService,
+	initService service.IInitService,
 ) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.ServiceContextMiddleware)
 	cacheController.InitCacheRoutes(e)
 	genreController.InitGenreRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
-	initCacheService.InitCache()
+	initService.InitCache()
+	go initService.InitJob()
 	return e
 }

@@ -8,7 +8,7 @@ import (
 
 type IMediaAccessCacheOperations interface {
 	SaveCacheMediaAccessList() *model.ServiceError
-	SaveCacheMediaAccess(ID string) (cache.MediaAccessCache, *model.ServiceError)
+	SaveCacheMediaAccess(ID string) *cache.MediaAccessCache
 }
 
 type mediaAccessCacheOperations struct {
@@ -27,6 +27,7 @@ func NewMediaAccessCacheOperations(
 }
 
 func (o *mediaAccessCacheOperations) SaveCacheMediaAccessList() *model.ServiceError {
+	o.mediaAccessCacheService.RemoveAll()
 	mediaAccessList, err := o.mediaAccessService.GetAll()
 	if err != nil {
 		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
@@ -35,7 +36,6 @@ func (o *mediaAccessCacheOperations) SaveCacheMediaAccessList() *model.ServiceEr
 	mediaAccessCache := make([]cache.MediaAccessCache, 0)
 	for _, value := range mediaAccessList {
 		cac := cache.MediaAccessCache{
-			ID:       value.ID,
 			MediaID:  value.MediaID,
 			Audience: value.Audience,
 		}
@@ -45,15 +45,16 @@ func (o *mediaAccessCacheOperations) SaveCacheMediaAccessList() *model.ServiceEr
 	return nil
 }
 
-func (o *mediaAccessCacheOperations) SaveCacheMediaAccess(ID string) (cache.MediaAccessCache, *model.ServiceError) {
+func (o *mediaAccessCacheOperations) SaveCacheMediaAccess(ID string) *cache.MediaAccessCache {
+	o.mediaAccessCacheService.Remove(ID)
 	access, err := o.mediaAccessService.GetByID(ID)
 	if err != nil {
-		return cache.MediaAccessCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
+		return nil
 	}
 	accessCache := cache.MediaAccessCache{
 		MediaID:  access.MediaID,
 		Audience: access.Audience,
 	}
 	o.mediaAccessCacheService.Save(accessCache)
-	return accessCache, nil
+	return &accessCache
 }

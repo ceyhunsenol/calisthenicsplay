@@ -95,14 +95,14 @@ func (g *GenreController) SaveGenre(c echo.Context) error {
 	if err != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	tx.Commit()
+
 	// content apiye cache icin request atiliyor
 	serviceError = g.cacheRequestService.GenreRefreshRequest(savedGenre.ID)
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 
-	tx.Commit()
 	return c.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
@@ -155,14 +155,14 @@ func (g *GenreController) UpdateGenre(c echo.Context) error {
 	if err != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	tx.Commit()
+
 	// content apiye cache icin request atiliyor
 	serviceError = g.cacheRequestService.GenreRefreshRequest(genre.ID)
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 
-	tx.Commit()
 	return c.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
 
@@ -222,14 +222,14 @@ func (g *GenreController) DeleteGenre(c echo.Context) error {
 	if serviceError != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	tx.Commit()
+
 	// content apiye cache icin request atiliyor
 	serviceError = g.cacheRequestService.GenreRefreshRequest(id)
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 
-	tx.Commit()
 	return c.JSON(http.StatusNoContent, nil)
 }
 

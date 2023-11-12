@@ -8,7 +8,7 @@ import (
 
 type IGeneralInfoCacheOperations interface {
 	SaveCacheGeneralInfos() *model.ServiceError
-	SaveCacheGeneralInfo(ID string) (cache.GeneralInfoCache, *model.ServiceError)
+	SaveCacheGeneralInfo(ID string) *cache.GeneralInfoCache
 }
 
 type generalInfoCacheOperations struct {
@@ -26,6 +26,7 @@ func NewGeneralInfoCacheOperations(generalInfoCacheService cache.IGeneralInfoCac
 }
 
 func (o *generalInfoCacheOperations) SaveCacheGeneralInfos() *model.ServiceError {
+	o.generalInfoCacheService.RemoveAll()
 	infos, err := o.generalInfoService.GetAll()
 	if err != nil {
 		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
@@ -43,15 +44,16 @@ func (o *generalInfoCacheOperations) SaveCacheGeneralInfos() *model.ServiceError
 	return nil
 }
 
-func (o *generalInfoCacheOperations) SaveCacheGeneralInfo(ID string) (cache.GeneralInfoCache, *model.ServiceError) {
+func (o *generalInfoCacheOperations) SaveCacheGeneralInfo(ID string) *cache.GeneralInfoCache {
+	o.generalInfoCacheService.Remove(ID)
 	info, err := o.generalInfoService.GetByID(ID)
 	if err != nil {
-		return cache.GeneralInfoCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
+		return nil
 	}
 	infoCache := cache.GeneralInfoCache{
 		Key:   info.InfoKey,
 		Value: info.InfoValue,
 	}
 	o.generalInfoCacheService.Save(infoCache)
-	return infoCache, nil
+	return &infoCache
 }

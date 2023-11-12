@@ -14,18 +14,21 @@ type MediaController struct {
 	contentTranslationOperations service.IContentTranslationOperations
 	DB                           *gorm.DB
 	cacheRequestService          service.ICacheRequestService
+	mediaAccessService           service.IMediaAccessService
 }
 
 func NewMediaController(contentTranslationOperations service.IContentTranslationOperations,
 	mediaService service.IMediaService,
 	DB *gorm.DB,
 	cacheRequestService service.ICacheRequestService,
+	mediaAccessService service.IMediaAccessService,
 ) *MediaController {
 	return &MediaController{
 		mediaService:                 mediaService,
 		contentTranslationOperations: contentTranslationOperations,
 		DB:                           DB,
 		cacheRequestService:          cacheRequestService,
+		mediaAccessService:           mediaAccessService,
 	}
 }
 
@@ -81,13 +84,13 @@ func (u *MediaController) SaveMedia(c echo.Context) error {
 	if serviceError != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	tx.Commit()
+
 	// content apiye cache icin request atiliyor
 	serviceError = u.cacheRequestService.MediaRefreshRequest(savedMedia.ID)
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
-	tx.Commit()
 	return c.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
@@ -136,13 +139,13 @@ func (u *MediaController) UpdateMedia(c echo.Context) error {
 	if serviceError != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	tx.Commit()
+
 	// content apiye cache icin request atiliyor
 	serviceError = u.cacheRequestService.MediaRefreshRequest(media.ID)
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
-	tx.Commit()
 	return c.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
 
@@ -202,13 +205,18 @@ func (u *MediaController) DeleteMedia(c echo.Context) error {
 	if serviceError != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	err = u.mediaAccessService.DeleteAllByMediaID(tx, id)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Media could not be deleted."})
+	}
+	tx.Commit()
+
 	// content apiye cache icin request atiliyor
 	serviceError = u.cacheRequestService.MediaRefreshRequest(id)
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 
-	tx.Commit()
 	return c.JSON(http.StatusNoContent, nil)
 }

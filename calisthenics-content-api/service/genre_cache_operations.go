@@ -8,7 +8,7 @@ import (
 
 type IGenreCacheOperations interface {
 	SaveCacheGenres() *model.ServiceError
-	SaveCacheGenre(ID string) (cache.GenreCache, *model.ServiceError)
+	SaveCacheGenre(ID string) *cache.GenreCache
 }
 
 type genreCacheOperations struct {
@@ -24,6 +24,7 @@ func NewGenreCacheOperations(genreService IGenreService, genreCacheService cache
 }
 
 func (o *genreCacheOperations) SaveCacheGenres() *model.ServiceError {
+	o.genreCacheService.RemoveAll()
 	genres, err := o.genreService.GetAll()
 	if err != nil {
 		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
@@ -31,12 +32,21 @@ func (o *genreCacheOperations) SaveCacheGenres() *model.ServiceError {
 	activeGenres := make([]cache.GenreCache, 0)
 	for _, value := range genres {
 		if value.Active {
+			//
+			codeMultiLang := cache.NewMultiLangCache(value.Code)
+			codeMultiLang.SetByLang("en", value.Code)
+			codeMultiLang.SetByLang("base", value.Code)
+
+			descriptionMultiLang := cache.NewMultiLangCache(value.Description)
+			descriptionMultiLang.SetByLang("en", value.Description)
+			descriptionMultiLang.SetByLang("base", value.Description)
+			//
 			contentCache := cache.GenreCache{
 				ID:                   value.ID,
 				Type:                 value.Type,
 				Section:              value.Section,
-				CodeMultiLang:        nil,
-				DescriptionMultiLang: nil,
+				CodeMultiLang:        codeMultiLang,
+				DescriptionMultiLang: descriptionMultiLang,
 				Active:               true,
 			}
 			activeGenres = append(activeGenres, contentCache)
@@ -47,11 +57,13 @@ func (o *genreCacheOperations) SaveCacheGenres() *model.ServiceError {
 	return nil
 }
 
-func (o *genreCacheOperations) SaveCacheGenre(ID string) (cache.GenreCache, *model.ServiceError) {
+func (o *genreCacheOperations) SaveCacheGenre(ID string) *cache.GenreCache {
+	o.genreCacheService.Remove(ID)
 	genre, err := o.genreService.GetByID(ID)
 	if err != nil || !genre.Active {
-		return cache.GenreCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
+		return nil
 	}
+
 	genreCache := cache.GenreCache{
 		ID:                   genre.ID,
 		CodeMultiLang:        nil,
@@ -60,5 +72,5 @@ func (o *genreCacheOperations) SaveCacheGenre(ID string) (cache.GenreCache, *mod
 		Active:               true,
 	}
 	o.genreCacheService.Save(genreCache)
-	return genreCache, nil
+	return &genreCache
 }

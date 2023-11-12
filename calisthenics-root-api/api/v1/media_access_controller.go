@@ -8,10 +8,13 @@ import (
 )
 
 type MediaAccessController struct {
-	mediaAccessService service.IMediaAccessService
+	mediaAccessService  service.IMediaAccessService
+	cacheRequestService service.ICacheRequestService
 }
 
-func NewMediaAccessController(mediaAccessService service.IMediaAccessService) *MediaAccessController {
+func NewMediaAccessController(mediaAccessService service.IMediaAccessService,
+	cacheRequestService service.ICacheRequestService,
+) *MediaAccessController {
 	return &MediaAccessController{mediaAccessService: mediaAccessService}
 }
 
@@ -50,6 +53,11 @@ func (m *MediaAccessController) SaveMediaAccess(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "MediaAccess could not be saved."})
 	}
 
+	// content apiye cache icin request atiliyor
+	serviceError := m.cacheRequestService.MediaAccessRefreshRequest(mediaAccessDTO.MediaID)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
+	}
 	return ctx.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
@@ -80,6 +88,11 @@ func (m *MediaAccessController) UpdateMediaAccess(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "MediaAccess could not be updated."})
 	}
 
+	// content apiye cache icin request atiliyor
+	serviceError := m.cacheRequestService.MediaAccessRefreshRequest(mediaAccessDTO.MediaID)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
+	}
 	return ctx.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
 
@@ -119,9 +132,19 @@ func (m *MediaAccessController) GetMediaAccess(ctx echo.Context) error {
 
 func (m *MediaAccessController) DeleteMediaAccess(ctx echo.Context) error {
 	id := ctx.Param("id")
-	err := m.mediaAccessService.Delete(id)
+	mediaAccess, err := m.mediaAccessService.GetByID(id)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "MediaAccess could not be deleted."})
+		return ctx.JSON(http.StatusNotFound, &MessageResource{Message: "MediaAccess not found"})
+	}
+	err = m.mediaAccessService.Delete(id)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "MediaAccess could not be deleted"})
+	}
+
+	// content apiye cache icin request atiliyor
+	serviceError := m.cacheRequestService.MediaAccessRefreshRequest(mediaAccess.MediaID)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 	return ctx.JSON(http.StatusNoContent, nil)
 }

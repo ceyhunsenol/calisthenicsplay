@@ -10,7 +10,7 @@ import (
 
 type IMediaCacheOperations interface {
 	SaveCacheMedias() *model.ServiceError
-	SaveCacheMedia(ID string) (cache.MediaCache, *model.ServiceError)
+	SaveCacheMedia(ID string) *cache.MediaCache
 }
 
 type mediaCacheOperations struct {
@@ -28,6 +28,7 @@ func NewMediaCacheOperations(mediaService IMediaService, mediaCacheService cache
 }
 
 func (o *mediaCacheOperations) SaveCacheMedias() *model.ServiceError {
+	o.mediaCacheService.RemoveAll()
 	medias, err := o.mediaService.GetAll()
 	if err != nil {
 		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
@@ -51,27 +52,33 @@ func (o *mediaCacheOperations) SaveCacheMedias() *model.ServiceError {
 	activeMedias := make([]cache.MediaCache, 0)
 	for _, value := range medias {
 		if value.Active {
-			contentCache := cache.MediaCache{
+			//
+			codeMultiLang := cache.NewMultiLangCache(value.DescriptionCode)
+			codeMultiLang.SetByLang("en", value.DescriptionCode)
+			codeMultiLang.SetByLang("base", value.DescriptionCode)
+			//
+			mediaCache := cache.MediaCache{
 				ID:                   value.ID,
-				DescriptionMultiLang: nil,
+				DescriptionMultiLang: codeMultiLang,
 				Active:               true,
 			}
-			activeMedias = append(activeMedias, contentCache)
+			activeMedias = append(activeMedias, mediaCache)
 		}
 	}
 	o.mediaCacheService.SaveAllSlice(activeMedias)
 	return nil
 }
 
-func (o *mediaCacheOperations) SaveCacheMedia(ID string) (cache.MediaCache, *model.ServiceError) {
+func (o *mediaCacheOperations) SaveCacheMedia(ID string) *cache.MediaCache {
+	o.mediaCacheService.Remove(ID)
 	media, err := o.mediaService.GetByID(ID)
 	if err != nil || !media.Active {
-		return cache.MediaCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
+		return nil
 	}
 
 	content, err := o.contentService.GetByID(media.ContentID)
 	if err != nil {
-		return cache.MediaCache{}, &model.ServiceError{Code: http.StatusBadRequest, Message: "Content not found"}
+		return nil
 	}
 
 	mediaCache := cache.MediaCache{
@@ -80,5 +87,5 @@ func (o *mediaCacheOperations) SaveCacheMedia(ID string) (cache.MediaCache, *mod
 	}
 	mediaCache.Active = content.Active
 	o.mediaCacheService.Save(mediaCache)
-	return mediaCache, nil
+	return &mediaCache
 }

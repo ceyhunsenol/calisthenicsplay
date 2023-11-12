@@ -10,6 +10,9 @@ type ICacheRequestService interface {
 	ContentRefreshRequest(ID string) *model.ServiceError
 	ContentWithMediasRefreshRequest(ID string) *model.ServiceError
 	MediaRefreshRequest(ID string) *model.ServiceError
+	GeneralInfoRefreshRequest(ID string) *model.ServiceError
+	ContentAccessRefreshRequest(ID string) *model.ServiceError
+	MediaAccessRefreshRequest(ID string) *model.ServiceError
 }
 
 type cacheRequestService struct {
@@ -63,6 +66,48 @@ func (c *cacheRequestService) ContentWithMediasRefreshRequest(ID string) *model.
 func (c *cacheRequestService) MediaRefreshRequest(ID string) *model.ServiceError {
 	request := calisthenics.RefreshRequest{
 		CacheType: "media",
+		ID:        ID,
+	}
+	errorResponse := c.contentService.Refresh(request)
+	if errorResponse != nil {
+		return &model.ServiceError{
+			Message: errorResponse.Message,
+		}
+	}
+	return nil
+}
+
+func (c *cacheRequestService) GeneralInfoRefreshRequest(ID string) *model.ServiceError {
+	request := calisthenics.RefreshRequest{
+		CacheType: "general_info",
+		ID:        ID,
+	}
+	errorResponse := c.contentService.Refresh(request)
+	if errorResponse != nil {
+		return &model.ServiceError{
+			Message: errorResponse.Message,
+		}
+	}
+	return nil
+}
+
+func (c *cacheRequestService) ContentAccessRefreshRequest(ID string) *model.ServiceError {
+	request := calisthenics.RefreshRequest{
+		CacheType: "content_access",
+		ID:        ID,
+	}
+	errorResponse := c.contentService.Refresh(request)
+	if errorResponse != nil {
+		return &model.ServiceError{
+			Message: errorResponse.Message,
+		}
+	}
+	return nil
+}
+
+func (c *cacheRequestService) MediaAccessRefreshRequest(ID string) *model.ServiceError {
+	request := calisthenics.RefreshRequest{
+		CacheType: "media_access",
 		ID:        ID,
 	}
 	errorResponse := c.contentService.Refresh(request)

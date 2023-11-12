@@ -31,17 +31,17 @@ func NewContentAccessCacheService(cacheService ICacheService) IContentAccessCach
 }
 
 func (c *contentAccessCacheService) Save(cache ContentAccessCache) {
-	c.Remove(cache.ID)
-	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.ID), cache)
+	c.Remove(cache.ContentID)
+	c.cacheService.Set(c.key, fmt.Sprintf("%s:_", cache.ContentID), cache)
 }
 
 func (c *contentAccessCacheService) SaveAllSlice(caches []ContentAccessCache) {
 	for _, value := range caches {
-		c.Remove(value.ID)
+		c.Remove(value.ContentID)
 	}
 
 	for _, value := range caches {
-		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.ID), value)
+		c.cacheService.Set(c.key, fmt.Sprintf("%s:_", value.ContentID), value)
 	}
 }
 

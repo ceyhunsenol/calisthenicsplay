@@ -1,5 +1,9 @@
 package cache
 
+import (
+	"time"
+)
+
 // GenreCache cache
 type GenreCache struct {
 	ID                   string
@@ -39,14 +43,31 @@ type GeneralInfoCache struct {
 
 // ContentAccessCache cache
 type ContentAccessCache struct {
-	ID        string
 	ContentID string
 	Audience  string
 }
 
 // MediaAccessCache cache
 type MediaAccessCache struct {
-	ID       string
 	MediaID  string
 	Audience string
+}
+
+// LimitedCache cache
+type LimitedCache struct {
+	Key     string
+	Value   interface{}
+	endDate time.Time
+}
+
+func NewLimitedCache(key string, value interface{}) LimitedCache {
+	return LimitedCache{
+		Key:     key,
+		Value:   value,
+		endDate: time.Now().Add(140 * time.Hour),
+	}
+}
+
+func (l *LimitedCache) GetLimitedEndDate() time.Time {
+	return l.endDate
 }

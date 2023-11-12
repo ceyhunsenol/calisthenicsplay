@@ -13,6 +13,7 @@ type IMediaAccessRepository interface {
 	GetByMediaID(mediaID string) (*data.MediaAccess, error)
 	Update(mediaAccess data.MediaAccess) (*data.MediaAccess, error)
 	Delete(id string) error
+	DeleteAllByMediaID(tx *gorm.DB, mediaID string) error
 }
 
 type mediaAccessRepository struct {
@@ -64,4 +65,8 @@ func (r *mediaAccessRepository) Update(mediaAccess data.MediaAccess) (*data.Medi
 
 func (r *mediaAccessRepository) Delete(id string) error {
 	return r.DB.Delete(&data.MediaAccess{}, "id = ?", id).Error
+}
+
+func (r *mediaAccessRepository) DeleteAllByMediaID(tx *gorm.DB, mediaID string) error {
+	return tx.Delete(&data.MediaAccess{}, "media_id = ?", mediaID).Error
 }

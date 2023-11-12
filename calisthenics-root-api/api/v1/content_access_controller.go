@@ -9,10 +9,16 @@ import (
 
 type ContentAccessController struct {
 	contentAccessService service.IContentAccessService
+	cacheRequestService  service.ICacheRequestService
 }
 
-func NewContentAccessController(contentAccessService service.IContentAccessService) *ContentAccessController {
-	return &ContentAccessController{contentAccessService: contentAccessService}
+func NewContentAccessController(contentAccessService service.IContentAccessService,
+	cacheRequestService service.ICacheRequestService,
+) *ContentAccessController {
+	return &ContentAccessController{
+		contentAccessService: contentAccessService,
+		cacheRequestService:  cacheRequestService,
+	}
 }
 
 func (c *ContentAccessController) InitContentAccessRoutes(e *echo.Group) {
@@ -50,6 +56,12 @@ func (c *ContentAccessController) SaveContentAccess(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "ContentAccess could not be saved."})
 	}
 
+	// content apiye cache icin request atiliyor
+	serviceError := c.cacheRequestService.ContentAccessRefreshRequest(contentAccessDTO.ContentID)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
+	}
+
 	return ctx.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
@@ -78,6 +90,12 @@ func (c *ContentAccessController) UpdateContentAccess(ctx echo.Context) error {
 	_, err = c.contentAccessService.Update(*contentAccess)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "ContentAccess could not be updated."})
+	}
+
+	// content apiye cache icin request atiliyor
+	serviceError := c.cacheRequestService.ContentAccessRefreshRequest(contentAccessDTO.ContentID)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 
 	return ctx.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
@@ -119,9 +137,18 @@ func (c *ContentAccessController) GetContentAccess(ctx echo.Context) error {
 
 func (c *ContentAccessController) DeleteContentAccess(ctx echo.Context) error {
 	id := ctx.Param("id")
-	err := c.contentAccessService.Delete(id)
+	contentAccess, err := c.contentAccessService.GetByID(id)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, &MessageResource{Message: "Content access not found"})
+	}
+	err = c.contentAccessService.Delete(id)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: "ContentAccess could not be deleted."})
+	}
+	// content apiye cache icin request atiliyor
+	serviceError := c.cacheRequestService.ContentAccessRefreshRequest(contentAccess.ContentID)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return ctx.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 	return ctx.JSON(http.StatusNoContent, nil)
 }

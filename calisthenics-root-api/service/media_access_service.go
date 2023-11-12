@@ -3,6 +3,7 @@ package service
 import (
 	"calisthenics-root-api/data"
 	"calisthenics-root-api/data/repository"
+	"gorm.io/gorm"
 )
 
 type IMediaAccessService interface {
@@ -13,6 +14,7 @@ type IMediaAccessService interface {
 	GetByMediaID(mediaID string) (*data.MediaAccess, error)
 	Update(mediaAccess data.MediaAccess) (*data.MediaAccess, error)
 	Delete(id string) error
+	DeleteAllByMediaID(tx *gorm.DB, mediaID string) error
 }
 
 type mediaAccessService struct {
@@ -49,4 +51,8 @@ func (s *mediaAccessService) Update(mediaAccess data.MediaAccess) (*data.MediaAc
 
 func (s *mediaAccessService) Delete(id string) error {
 	return s.mediaAccessRepository.Delete(id)
+}
+
+func (s *mediaAccessService) DeleteAllByMediaID(tx *gorm.DB, mediaID string) error {
+	return s.mediaAccessRepository.DeleteAllByMediaID(tx, mediaID)
 }

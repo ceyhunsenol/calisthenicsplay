@@ -9,7 +9,7 @@ import (
 type IContentCacheOperations interface {
 	SaveCacheContentWithMedias(ID string) *model.ServiceError
 	SaveCacheContents() *model.ServiceError
-	SaveCacheContent(ID string) (cache.ContentCache, *model.ServiceError)
+	SaveCacheContent(ID string) *cache.ContentCache
 }
 
 type contentCacheOperations struct {
@@ -33,9 +33,9 @@ func NewContentCacheOperations(contentService IContentService,
 }
 
 func (o *contentCacheOperations) SaveCacheContentWithMedias(ID string) *model.ServiceError {
-	content, serviceError := o.SaveCacheContent(ID)
-	if serviceError != nil {
-		return serviceError
+	content := o.SaveCacheContent(ID)
+	if content == nil {
+		return &model.ServiceError{Code: http.StatusBadRequest, Message: "Content not found"}
 	}
 
 	medias, err := o.mediaService.GetAllByContentID(content.ID)
@@ -63,6 +63,7 @@ func (o *contentCacheOperations) SaveCacheContentWithMedias(ID string) *model.Se
 }
 
 func (o *contentCacheOperations) SaveCacheContents() *model.ServiceError {
+	o.contentCacheService.RemoveAll()
 	contents, err := o.contentService.GetAll()
 	if err != nil {
 		return &model.ServiceError{Code: http.StatusInternalServerError, Message: "Unknown error"}
@@ -71,10 +72,19 @@ func (o *contentCacheOperations) SaveCacheContents() *model.ServiceError {
 	activeContents := make([]cache.ContentCache, 0)
 	for _, value := range contents {
 		if value.Active {
+			//
+			codeMultiLang := cache.NewMultiLangCache(value.Code)
+			codeMultiLang.SetByLang("en", value.Code)
+			codeMultiLang.SetByLang("base", value.Code)
+
+			descriptionMultiLang := cache.NewMultiLangCache(value.Description)
+			descriptionMultiLang.SetByLang("en", value.Description)
+			descriptionMultiLang.SetByLang("base", value.Description)
+			//
 			contentCache := cache.ContentCache{
 				ID:                    value.ID,
-				CodeMultiLang:         nil,
-				DescriptionMultiLang:  nil,
+				CodeMultiLang:         codeMultiLang,
+				DescriptionMultiLang:  descriptionMultiLang,
 				Active:                true,
 				HelperContentIDs:      nil,
 				RequirementContentIDs: nil,
@@ -86,10 +96,11 @@ func (o *contentCacheOperations) SaveCacheContents() *model.ServiceError {
 	return nil
 }
 
-func (o *contentCacheOperations) SaveCacheContent(ID string) (cache.ContentCache, *model.ServiceError) {
+func (o *contentCacheOperations) SaveCacheContent(ID string) *cache.ContentCache {
+	o.contentCacheService.Remove(ID)
 	content, err := o.contentService.GetByID(ID)
 	if err != nil || !content.Active {
-		return cache.ContentCache{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Not found"}
+		return nil
 	}
 	contentCache := cache.ContentCache{
 		ID:                    content.ID,
@@ -100,5 +111,5 @@ func (o *contentCacheOperations) SaveCacheContent(ID string) (cache.ContentCache
 		RequirementContentIDs: nil,
 	}
 	o.contentCacheService.Save(contentCache)
-	return contentCache, nil
+	return &contentCache
 }

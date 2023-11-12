@@ -21,7 +21,7 @@ func NewGeneralInfoRepository(db *gorm.DB) IGeneralInfoRepository {
 
 func (r *generalInfoRepository) GetAll() ([]data.GeneralInfo, error) {
 	var contents []data.GeneralInfo
-	result := r.DB.Preload("Medias").Find(&contents)
+	result := r.DB.Find(&contents)
 	return contents, result.Error
 }
 

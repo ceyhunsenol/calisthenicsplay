@@ -13,6 +13,7 @@ type IContentAccessRepository interface {
 	GetByContentID(contentID string) (*data.ContentAccess, error)
 	Update(contentAccess data.ContentAccess) (*data.ContentAccess, error)
 	Delete(id string) error
+	DeleteAllByContentID(tx *gorm.DB, contentID string) error
 }
 
 type contentAccessRepository struct {
@@ -64,4 +65,8 @@ func (r *contentAccessRepository) Update(contentAccess data.ContentAccess) (*dat
 
 func (r *contentAccessRepository) Delete(id string) error {
 	return r.DB.Delete(&data.ContentAccess{}, "id = ?", id).Error
+}
+
+func (r *contentAccessRepository) DeleteAllByContentID(tx *gorm.DB, contentID string) error {
+	return tx.Delete(&data.ContentAccess{}, "content_id = ?", contentID).Error
 }

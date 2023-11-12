@@ -16,6 +16,7 @@ type ContentController struct {
 	contentTranslationOperations service.IContentTranslationOperations
 	DB                           *gorm.DB
 	cacheRequestService          service.ICacheRequestService
+	contentAccessService         service.IContentAccessService
 }
 
 func NewContentController(contentService service.IContentService,
@@ -24,6 +25,7 @@ func NewContentController(contentService service.IContentService,
 	contentTranslationOperations service.IContentTranslationOperations,
 	DB *gorm.DB,
 	cacheRequestService service.ICacheRequestService,
+	contentAccessService service.IContentAccessService,
 ) *ContentController {
 	return &ContentController{
 		contentService:               contentService,
@@ -32,6 +34,7 @@ func NewContentController(contentService service.IContentService,
 		contentTranslationOperations: contentTranslationOperations,
 		DB:                           DB,
 		cacheRequestService:          cacheRequestService,
+		contentAccessService:         contentAccessService,
 	}
 }
 
@@ -99,14 +102,12 @@ func (u *ContentController) SaveContent(c echo.Context) error {
 	if serviceError != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	tx.Commit()
 	// content apiye cache icin request atiliyor
 	serviceError = u.cacheRequestService.ContentRefreshRequest(content.ID)
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
-
-	tx.Commit()
 	return c.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
@@ -159,6 +160,7 @@ func (u *ContentController) UpdateContent(c echo.Context) error {
 	if serviceError != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	tx.Commit()
 	// content apiye cache icin request atiliyor
 	if !content.Active {
 		serviceError = u.cacheRequestService.ContentWithMediasRefreshRequest(content.ID)
@@ -166,11 +168,8 @@ func (u *ContentController) UpdateContent(c echo.Context) error {
 		serviceError = u.cacheRequestService.ContentRefreshRequest(content.ID)
 	}
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
-
-	tx.Commit()
 	return c.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
 
@@ -246,14 +245,17 @@ func (u *ContentController) DeleteContent(c echo.Context) error {
 	if serviceError != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}
+	err = u.contentAccessService.DeleteAllByContentID(tx, id)
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Content could not be deleted."})
+	}
+	tx.Commit()
 	// content apiye cache icin request atiliyor
 	serviceError = u.cacheRequestService.ContentWithMediasRefreshRequest(id)
 	if serviceError != nil && serviceError.Message != "Request error" {
-		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
-
-	tx.Commit()
 	return c.JSON(http.StatusNoContent, nil)
 }
 
