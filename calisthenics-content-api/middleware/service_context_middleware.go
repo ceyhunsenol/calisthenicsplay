@@ -5,12 +5,30 @@ import (
 	"context"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"strings"
 )
 
 func ServiceContextMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		authorization := c.Request().Header.Get("X-Authorization")
-		langCode := c.Request().Header.Get("X-Lang-Code")
+		req := c.Request()
+		authorization := req.Header.Get("X-Authorization")
+		langCode := req.Header.Get("X-Lang-Code")
+		platformType := req.Header.Get("X-Platform-Type")
+		userAgent := req.Header.Get("x-user-agent")
+		clientIP := c.RealIP()
+
+		scheme := "http"
+		if req.TLS != nil {
+			scheme = "https"
+		}
+		host := req.Host
+
+		// Ana URL'yi oluştur
+		baseURL := fmt.Sprintf("%s://%s", scheme, host)
+
+		if userAgent == "" {
+			userAgent = c.Request().Header.Get("user-agent")
+		}
 
 		if langCode == "" {
 			langCode = "en"
@@ -20,6 +38,12 @@ func ServiceContextMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		serviceCtx := &model.ServiceContext{
 			Authorization: authorization,
 			LangCode:      langCode,
+			PlatformType:  platformType,
+			ClientIP:      clientIP,
+			CallerIP:      clientIP,
+			ClientIPList:  strings.Split(clientIP, ","),
+			UserAgent:     userAgent,
+			Host:          baseURL,
 		}
 
 		ctx = context.WithValue(ctx, "ServiceContextKey", serviceCtx)

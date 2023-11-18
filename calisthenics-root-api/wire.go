@@ -41,6 +41,7 @@ var RepositorySet = wire.NewSet(
 	repository.NewContentTranslationRepository,
 	repository.NewContentAccessRepository,
 	repository.NewMediaAccessRepository,
+	repository.NewEncodingFileRepository,
 )
 
 var DomainServiceSet = wire.NewSet(
@@ -58,6 +59,7 @@ var DomainServiceSet = wire.NewSet(
 	service.NewContentTranslationService,
 	service.NewContentAccessService,
 	service.NewMediaAccessService,
+	service.NewEncodingFileService,
 )
 
 var ServiceSet = wire.NewSet(
@@ -82,6 +84,7 @@ var ControllerSet = wire.NewSet(
 	v1.NewContentTranslationController,
 	v1.NewContentAccessController,
 	v1.NewMediaAccessController,
+	v1.NewEncodingFileController,
 )
 
 func InitializeApp() *echo.Echo {
@@ -97,7 +100,7 @@ func NewDatabase() *gorm.DB {
 	if err != nil {
 		panic("Failed to connect to the database")
 	}
-	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Media{}, &data.Genre{}, &data.GenreType{}, &data.Translation{}, &data.ContentTranslation{}, &data.GeneralInfo{}, &data.ContentAccess{}, &data.MediaAccess{})
+	err = db.AutoMigrate(&data.User{}, &data.Role{}, &data.Privilege{}, &data.Content{}, &data.Encoding{}, &data.EncodingFile{}, &data.Media{}, &data.Genre{}, &data.GenreType{}, &data.Translation{}, &data.ContentTranslation{}, &data.GeneralInfo{}, &data.ContentAccess{}, &data.MediaAccess{})
 	if err != nil {
 		panic("Failed to migrate database")
 	}
@@ -117,6 +120,7 @@ func InitRoutes(
 	contentTranslationController *v1.ContentTranslationController,
 	contentAccessController *v1.ContentAccessController,
 	mediaAccessController *v1.MediaAccessController,
+	encodingFileController *v1.EncodingFileController,
 	userService service.IUserService) *echo.Echo {
 
 	e := echo.New()
@@ -157,5 +161,8 @@ func InitRoutes(
 
 	middlewareGroup = e.Group("/v1/media-access", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
 	mediaAccessController.InitMediaAccessRoutes(middlewareGroup)
+
+	middlewareGroup = e.Group("/v1/encoding-files", authMiddleware.MiddlewareFunc, privilegeMiddleware.MiddlewareFunc)
+	encodingFileController.InitEncodingFileRoutes(middlewareGroup)
 	return e
 }

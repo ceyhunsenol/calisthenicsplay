@@ -8,7 +8,7 @@ import (
 
 type IMediaAccessCacheOperations interface {
 	SaveCacheMediaAccessList() *model.ServiceError
-	SaveCacheMediaAccess(ID string) *cache.MediaAccessCache
+	SaveCacheMediaAccess(ID string) interface{}
 }
 
 type mediaAccessCacheOperations struct {
@@ -45,7 +45,7 @@ func (o *mediaAccessCacheOperations) SaveCacheMediaAccessList() *model.ServiceEr
 	return nil
 }
 
-func (o *mediaAccessCacheOperations) SaveCacheMediaAccess(ID string) *cache.MediaAccessCache {
+func (o *mediaAccessCacheOperations) SaveCacheMediaAccess(ID string) interface{} {
 	o.mediaAccessCacheService.Remove(ID)
 	access, err := o.mediaAccessService.GetByID(ID)
 	if err != nil {

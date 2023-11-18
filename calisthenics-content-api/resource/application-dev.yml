@@ -6,3 +6,7 @@ database:
 integration:
   calisthenics:
     auth: http://localhost:1323
+
+media:
+  hls:
+    paseto-token: supersecretkeyyoushouldnotcommit

@@ -8,7 +8,7 @@ import (
 
 type IGenreCacheOperations interface {
 	SaveCacheGenres() *model.ServiceError
-	SaveCacheGenre(ID string) *cache.GenreCache
+	SaveCacheGenre(ID string) interface{}
 }
 
 type genreCacheOperations struct {
@@ -57,7 +57,7 @@ func (o *genreCacheOperations) SaveCacheGenres() *model.ServiceError {
 	return nil
 }
 
-func (o *genreCacheOperations) SaveCacheGenre(ID string) *cache.GenreCache {
+func (o *genreCacheOperations) SaveCacheGenre(ID string) interface{} {
 	o.genreCacheService.Remove(ID)
 	genre, err := o.genreService.GetByID(ID)
 	if err != nil || !genre.Active {

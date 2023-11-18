@@ -25,9 +25,10 @@ type RequirementContent struct {
 
 type Media struct {
 	BaseModel
-	DescriptionCode string `json:"description_code"`
-	URL             string `json:"url"`
-	Type            string `json:"type"`
-	ContentID       string `gorm:"foreignKey:ID" json:"content_id"`
-	Active          bool   `json:"active"`
+	DescriptionCode string   `json:"description_code"`
+	URL             string   `json:"url"`
+	Type            string   `json:"type"`
+	ContentID       string   `gorm:"foreignKey:ContentID;references:ID" json:"content_id"`
+	Active          bool     `json:"active"`
+	Encoding        Encoding `gorm:"foreignKey:MediaID"`
 }

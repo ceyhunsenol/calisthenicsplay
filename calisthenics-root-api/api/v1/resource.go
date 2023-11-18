@@ -121,3 +121,18 @@ type MediaAccessResource struct {
 	MediaID  string `json:"mediaID"`
 	Audience string `json:"audience"`
 }
+
+// EncodingResource Resource
+type EncodingResource struct {
+	ID         string `json:"id"`
+	LicenseKey string `json:"licenseKey"`
+	MediaID    string `json:"mediaID"`
+}
+
+// EncodingFileResource Resource
+type EncodingFileResource struct {
+	ID         string `json:"id"`
+	FileName   string `json:"fileName"`
+	EncodingID string `json:"encodingID"`
+	IV         string `json:"iv"`
+}

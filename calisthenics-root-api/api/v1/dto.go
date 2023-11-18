@@ -1,5 +1,7 @@
 package v1
 
+import "mime/multipart"
+
 // LoginDTO DTO
 type LoginDTO struct {
 	Username string `json:"username"`
@@ -100,4 +102,22 @@ type ContentAccessDTO struct {
 type MediaAccessDTO struct {
 	MediaID  string `json:"mediaID" validate:"required"`
 	Audience string `json:"audience" validate:"required"`
+}
+
+// EncodingDTO DTO
+type EncodingDTO struct {
+	LicenseKey string `json:"licenseKey"`
+	MediaID    string `json:"MediaID"`
+}
+
+// EncodingFileDTO DTO
+type EncodingFileDTO struct {
+	EncodingID string `json:"encodingID" validate:"required"`
+	Files      FileDTO
+}
+
+// FileDTO DTO
+type FileDTO struct {
+	File []*multipart.FileHeader
+	IV   []string `json:"iv"`
 }

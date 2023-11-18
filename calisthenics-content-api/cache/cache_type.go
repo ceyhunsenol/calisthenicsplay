@@ -9,4 +9,6 @@ const (
 	GeneralInfo   CacheType = "general_info"
 	ContentAccess CacheType = "content_access"
 	MediaAccess   CacheType = "media_access"
+	HLS           CacheType = "hls"
+	Translation   CacheType = "translation"
 )

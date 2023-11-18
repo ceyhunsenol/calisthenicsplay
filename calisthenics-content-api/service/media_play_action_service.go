@@ -8,8 +8,8 @@ import (
 )
 
 type IMediaPlayActionService interface {
-	GetPlayAction(token string, cache cache.MediaCache) model.PlayAction
-	GetPlayActionByMediaID(token string, mediaID string) model.PlayAction
+	GetPlayAction(request model.PlayActionRequest, cache cache.MediaCache) model.PlayAction
+	GetPlayActionByMediaID(request model.PlayActionRequest, mediaID string) model.PlayAction
 }
 
 type mediaPlayActionService struct {
@@ -17,8 +17,8 @@ type mediaPlayActionService struct {
 	contentAccessCacheService cache.IContentAccessCacheService
 	mediaAccessCacheService   cache.IMediaAccessCacheService
 	calisthenicsAuthService   calisthenics.ICalisthenicsAuthService
-
-	mediaCacheService cache.IMediaCacheService
+	translationCacheService   cache.ITranslationCacheService
+	mediaCacheService         cache.IMediaCacheService
 }
 
 func NewMediaPlayActionService(generalInfoCacheService cache.IGeneralInfoCacheService,
@@ -26,6 +26,7 @@ func NewMediaPlayActionService(generalInfoCacheService cache.IGeneralInfoCacheSe
 	mediaAccessCacheService cache.IMediaAccessCacheService,
 	calisthenicsAuthService calisthenics.ICalisthenicsAuthService,
 	mediaCacheService cache.IMediaCacheService,
+	translationCacheService cache.ITranslationCacheService,
 ) IMediaPlayActionService {
 	return &mediaPlayActionService{
 		generalInfoCacheService:   generalInfoCacheService,
@@ -33,27 +34,33 @@ func NewMediaPlayActionService(generalInfoCacheService cache.IGeneralInfoCacheSe
 		mediaAccessCacheService:   mediaAccessCacheService,
 		calisthenicsAuthService:   calisthenicsAuthService,
 		mediaCacheService:         mediaCacheService,
+		translationCacheService:   translationCacheService,
 	}
 }
 
-func (s *mediaPlayActionService) GetPlayActionByMediaID(token string, mediaID string) model.PlayAction {
+func (s *mediaPlayActionService) GetPlayActionByMediaID(request model.PlayActionRequest, mediaID string) model.PlayAction {
 	media, err := s.mediaCacheService.GetByID(mediaID)
 	if err != nil {
-		return model.PlayAction{}
+		registerButtonTranslate := s.translationCacheService.GetByLang("PLAY_ACTION_BUTTON_REGISTER", request.LangCode)
+		return model.PlayAction{
+			ActionType: config.Register,
+			ButtonText: registerButtonTranslate,
+		}
 	}
-	return s.GetPlayAction(token, media)
+	return s.GetPlayAction(request, media)
 }
 
-func (s *mediaPlayActionService) GetPlayAction(token string, cache cache.MediaCache) model.PlayAction {
+func (s *mediaPlayActionService) GetPlayAction(request model.PlayActionRequest, cache cache.MediaCache) model.PlayAction {
 	accessLevelInfo, accessLevelError := s.generalInfoCacheService.GetByID(string(config.AccessLevel))
 	mediaAccess, mediaAccessError := s.mediaAccessCacheService.GetByID(cache.ID)
 	contentAccess, contentAccessError := s.contentAccessCacheService.GetByID(cache.ContentID)
 
+	watchTranslate := s.translationCacheService.GetByLang("PLAY_ACTION_BUTTON_WATCH", request.LangCode)
 	// medianin acess level everyone ise playaction watch donuluyor.
 	if mediaAccess.Audience == string(config.Everyone) {
 		return model.PlayAction{
-			ActionType: string(config.Watch),
-			ButtonText: string(config.Watch), // TODO translation
+			ActionType: config.Watch,
+			ButtonText: watchTranslate,
 		}
 	}
 
@@ -62,8 +69,8 @@ func (s *mediaPlayActionService) GetPlayAction(token string, cache cache.MediaCa
 		// mediaya sahip olan contentin access level everyone ise playaction watch donuluyor.
 		if contentAccess.Audience == string(config.Everyone) {
 			return model.PlayAction{
-				ActionType: string(config.Watch),
-				ButtonText: string(config.Watch), // TODO translation
+				ActionType: config.Watch,
+				ButtonText: watchTranslate,
 			}
 		}
 
@@ -71,19 +78,20 @@ func (s *mediaPlayActionService) GetPlayAction(token string, cache cache.MediaCa
 		if contentAccessError != nil {
 			if accessLevelInfo == string(config.Everyone) {
 				return model.PlayAction{
-					ActionType: string(config.Watch),
-					ButtonText: string(config.Watch), // TODO translation
+					ActionType: config.Watch,
+					ButtonText: watchTranslate,
 				}
 			}
 		}
 	}
 
+	registerButtonTranslate := s.translationCacheService.GetByLang("PLAY_ACTION_BUTTON_REGISTER", request.LangCode)
 	// buraya gelirse ya user login ya da subscription istenmektedir.
-	_, errorResponse := s.calisthenicsAuthService.GetUser(token)
+	_, errorResponse := s.calisthenicsAuthService.GetUser(request.Token)
 	if errorResponse != nil {
 		return model.PlayAction{
-			ActionType: string(config.Register),
-			ButtonText: string(config.Register), // TODO translation
+			ActionType: config.Register,
+			ButtonText: registerButtonTranslate,
 		}
 	}
 
@@ -92,8 +100,8 @@ func (s *mediaPlayActionService) GetPlayAction(token string, cache cache.MediaCa
 	// medianin access level user ise playaction watch donuluyor.
 	if mediaAccess.Audience == string(config.User) {
 		return model.PlayAction{
-			ActionType: string(config.Watch),
-			ButtonText: string(config.Watch), // TODO translation
+			ActionType: config.Watch,
+			ButtonText: watchTranslate,
 		}
 	}
 
@@ -102,8 +110,8 @@ func (s *mediaPlayActionService) GetPlayAction(token string, cache cache.MediaCa
 		// mediaya sahip olan contentin access level user ise playaction watch donuluyor.
 		if contentAccess.Audience == string(config.User) {
 			return model.PlayAction{
-				ActionType: string(config.Watch),
-				ButtonText: string(config.Watch), // TODO translation
+				ActionType: config.Watch,
+				ButtonText: watchTranslate,
 			}
 		}
 
@@ -111,8 +119,8 @@ func (s *mediaPlayActionService) GetPlayAction(token string, cache cache.MediaCa
 		if contentAccessError != nil {
 			if accessLevelInfo == string(config.User) {
 				return model.PlayAction{
-					ActionType: string(config.Watch),
-					ButtonText: string(config.Watch), // TODO translation
+					ActionType: config.Watch,
+					ButtonText: watchTranslate,
 				}
 			}
 		}
@@ -120,13 +128,13 @@ func (s *mediaPlayActionService) GetPlayAction(token string, cache cache.MediaCa
 
 	if accessLevelError != nil {
 		return model.PlayAction{
-			ActionType: string(config.Watch),
-			ButtonText: string(config.Watch), // TODO translation
+			ActionType: config.Watch,
+			ButtonText: watchTranslate,
 		}
 	}
 
 	return model.PlayAction{
-		ActionType: string(config.Register),
-		ButtonText: string(config.Register), // TODO translation
+		ActionType: config.Register,
+		ButtonText: registerButtonTranslate,
 	}
 }

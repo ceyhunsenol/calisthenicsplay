@@ -8,7 +8,7 @@ import (
 
 type IGeneralInfoCacheOperations interface {
 	SaveCacheGeneralInfos() *model.ServiceError
-	SaveCacheGeneralInfo(ID string) *cache.GeneralInfoCache
+	SaveCacheGeneralInfo(ID string) interface{}
 }
 
 type generalInfoCacheOperations struct {
@@ -44,7 +44,7 @@ func (o *generalInfoCacheOperations) SaveCacheGeneralInfos() *model.ServiceError
 	return nil
 }
 
-func (o *generalInfoCacheOperations) SaveCacheGeneralInfo(ID string) *cache.GeneralInfoCache {
+func (o *generalInfoCacheOperations) SaveCacheGeneralInfo(ID string) interface{} {
 	o.generalInfoCacheService.Remove(ID)
 	info, err := o.generalInfoService.GetByID(ID)
 	if err != nil {

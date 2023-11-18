@@ -8,7 +8,7 @@ import (
 
 type IContentAccessCacheOperations interface {
 	SaveCacheContentAccessList() *model.ServiceError
-	SaveCacheContentAccess(ID string) *cache.ContentAccessCache
+	SaveCacheContentAccess(ID string) interface{}
 }
 
 type contentAccessCacheOperations struct {
@@ -45,7 +45,7 @@ func (o *contentAccessCacheOperations) SaveCacheContentAccessList() *model.Servi
 	return nil
 }
 
-func (o *contentAccessCacheOperations) SaveCacheContentAccess(ID string) *cache.ContentAccessCache {
+func (o *contentAccessCacheOperations) SaveCacheContentAccess(ID string) interface{} {
 	o.contentAccessCacheService.Remove(ID)
 	access, err := o.contentAccessService.GetByID(ID)
 	if err != nil {

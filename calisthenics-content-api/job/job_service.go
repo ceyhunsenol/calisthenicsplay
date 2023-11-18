@@ -6,7 +6,7 @@ import (
 )
 
 type IJobService interface {
-	LimitedCacheStartJob()
+	LimitedCacheJob()
 }
 
 type jobService struct {
@@ -19,7 +19,7 @@ func NewJobService(limitedCacheService cache.ILimitedCacheService) IJobService {
 	}
 }
 
-func (j *jobService) LimitedCacheStartJob() {
+func (j *jobService) LimitedCacheJob() {
 	ticker := time.NewTicker(12 * time.Hour)
 	defer ticker.Stop()
 

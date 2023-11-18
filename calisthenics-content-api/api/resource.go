@@ -20,3 +20,16 @@ type GenreResource struct {
 type ContentResource struct {
 	ID string
 }
+
+// VideoURLResolutionResource resource
+type VideoURLResolutionResource struct {
+	Height       int
+	Bandwidth    int
+	AvgBandwidth int
+}
+
+// VideoURLResource resource
+type VideoURLResource struct {
+	VideoURL    string                       `json:"videoURL"`
+	Resolutions []VideoURLResolutionResource `json:"resolutions"`
+}

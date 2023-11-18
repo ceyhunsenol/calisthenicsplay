@@ -13,12 +13,13 @@ import (
 	"calisthenics-content-api/data/repository"
 	"calisthenics-content-api/integration/calisthenics"
 	"calisthenics-content-api/job"
-	"calisthenics-content-api/middleware"
+	middleware2 "calisthenics-content-api/middleware"
 	"calisthenics-content-api/service"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -53,17 +54,29 @@ func InitializeApp() *echo.Echo {
 	iMediaAccessRepository := repository.NewMediaAccessRepository(db)
 	iMediaAccessService := service.NewMediaAccessService(iMediaAccessRepository)
 	iMediaAccessCacheOperations := service.NewMediaAccessCacheOperations(iMediaAccessCacheService, iMediaAccessService)
+	ihlsEncodingCacheService := cache.NewHLSEncodingCacheService(iCacheService)
+	iEncodingRepository := repository.NewEncodingRepository(db)
+	iEncodingService := service.NewEncodingService(iEncodingRepository)
+	ihlsEncodingCacheOperations := service.NewHLSEncodingCacheOperations(ihlsEncodingCacheService, iEncodingService)
+	iTranslationCacheService := cache.NewTranslationCacheService(iCacheService)
+	iTranslationRepository := repository.NewTranslationRepository(db)
+	iTranslationService := service.NewTranslationService(iTranslationRepository)
+	iTranslationCacheOperations := service.NewTranslationCacheOperations(iTranslationCacheService, iTranslationService)
 	iLimitedCacheService := cache.NewLimitedCacheService(iCacheService)
+	iJobService := job.NewJobService(iLimitedCacheService)
+	iInitService := service.NewInitService(iContentCacheOperations, iGenreCacheOperations, iMediaCacheOperations, iContentAccessCacheOperations, iGeneralInfoCacheOperations, iMediaAccessCacheOperations, ihlsEncodingCacheOperations, iTranslationCacheOperations, iJobService)
 	iCalisthenicsAuthService := calisthenics.NewCalisthenicsAuthService(iLimitedCacheService)
 	iMediaPlayActionService := service.NewMediaPlayActionService(iGeneralInfoCacheService, iContentAccessCacheService, iMediaAccessCacheService, iCalisthenicsAuthService, iMediaCacheService)
-	cacheController := api.NewCacheController(iMediaCacheOperations, iContentCacheOperations, iGenreCacheOperations, iGeneralInfoCacheOperations, iContentAccessCacheOperations, iMediaAccessCacheOperations, iMediaPlayActionService, iMediaCacheService)
+	cacheController := api.NewCacheController(iMediaCacheOperations, iContentCacheOperations, iGenreCacheOperations, iGeneralInfoCacheOperations, iContentAccessCacheOperations, iMediaAccessCacheOperations, ihlsEncodingCacheOperations, iInitService, iMediaPlayActionService)
 	iGenreOperations := service.NewGenreOperations(iGenreService, iGenreCacheService)
 	genreController := api.NewGenreController(iGenreOperations)
 	iContentOperations := service.NewContentOperations(iContentService, iContentCacheService)
 	contentController := api.NewContentController(iContentOperations)
-	iJobService := job.NewJobService(iLimitedCacheService)
-	iInitService := service.NewInitService(iContentCacheOperations, iGenreCacheOperations, iMediaCacheOperations, iContentAccessCacheOperations, iGeneralInfoCacheOperations, iMediaAccessCacheOperations, iJobService)
-	echoEcho := InitRoutes(cacheController, genreController, contentController, iInitService)
+	iParameterService := service.NewParameterService(iGeneralInfoCacheService)
+	ihlsMediaService := service.NewHLSMediaService(ihlsEncodingCacheService, iMediaCacheService, iMediaPlayActionService, iParameterService)
+	hlsMediaController := api.NewHLSMediaController(ihlsMediaService)
+	hlsMediaTestController := api.NewHLSMediaTestController()
+	echoEcho := InitRoutes(cacheController, genreController, contentController, hlsMediaController, hlsMediaTestController, iInitService)
 	return echoEcho
 }
 
@@ -73,15 +86,15 @@ var GeneralSet = wire.NewSet(NewDatabase, InitRoutes, cache.NewCacheManager, job
 
 var IntegrationSet = wire.NewSet(calisthenics.NewCalisthenicsAuthService)
 
-var RepositorySet = wire.NewSet(repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreRepository, repository.NewGeneralInfoRepository, repository.NewContentAccessRepository, repository.NewMediaAccessRepository)
+var RepositorySet = wire.NewSet(repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreRepository, repository.NewGeneralInfoRepository, repository.NewContentAccessRepository, repository.NewMediaAccessRepository, repository.NewEncodingRepository, repository.NewTranslationRepository)
 
-var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService, service.NewInitService, service.NewGeneralInfoService, service.NewContentAccessService, service.NewMediaAccessService)
+var DomainServiceSet = wire.NewSet(service.NewContentService, service.NewMediaService, service.NewGenreService, service.NewInitService, service.NewGeneralInfoService, service.NewContentAccessService, service.NewMediaAccessService, service.NewEncodingService, service.NewTranslationService)
 
-var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCacheService, cache.NewGenreCacheService, cache.NewGeneralInfoCacheService, cache.NewMediaAccessCacheService, cache.NewContentAccessCacheService, cache.NewLimitedCacheService)
+var CacheServiceSet = wire.NewSet(cache.NewMediaCacheService, cache.NewContentCacheService, cache.NewGenreCacheService, cache.NewGeneralInfoCacheService, cache.NewMediaAccessCacheService, cache.NewContentAccessCacheService, cache.NewLimitedCacheService, cache.NewHLSEncodingCacheService, cache.NewTranslationCacheService)
 
-var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations, service.NewMediaCacheOperations, service.NewContentCacheOperations, service.NewGenreCacheOperations, service.NewGeneralInfoCacheOperations, service.NewContentAccessCacheOperations, service.NewMediaAccessCacheOperations, service.NewMediaPlayActionService)
+var ServiceSet = wire.NewSet(service.NewMediaOperations, service.NewContentOperations, service.NewGenreOperations, service.NewMediaCacheOperations, service.NewContentCacheOperations, service.NewGenreCacheOperations, service.NewGeneralInfoCacheOperations, service.NewContentAccessCacheOperations, service.NewMediaAccessCacheOperations, service.NewMediaPlayActionService, service.NewHLSEncodingCacheOperations, service.NewHLSMediaService, service.NewParameterService, service.NewTranslationCacheOperations)
 
-var ControllerSet = wire.NewSet(api.NewCacheController, api.NewGenreController, api.NewContentController)
+var ControllerSet = wire.NewSet(api.NewCacheController, api.NewGenreController, api.NewContentController, api.NewHLSMediaTestController, api.NewHLSMediaController)
 
 func NewDatabase() *gorm.DB {
 	dbUser := viper.GetString("database.user")
@@ -102,12 +115,21 @@ func InitRoutes(
 	cacheController *api.CacheController,
 	genreController *api.GenreController,
 	contentController *api.ContentController,
+	hlsMediaController *api.HLSMediaController,
+	hlsMediaTestController *api.HLSMediaTestController,
 	initService service.IInitService,
 ) *echo.Echo {
 	e := echo.New()
-	e.Use(middleware.ServiceContextMiddleware)
+	e.Use(middleware.Static("/downloads/"))
+	e.GET("/downloads/:file", func(c echo.Context) error {
+		fileName := c.Param("file")
+		return c.Attachment("downloads/"+fileName, fileName)
+	})
+	e.Use(middleware2.ServiceContextMiddleware)
 	cacheController.InitCacheRoutes(e)
 	genreController.InitGenreRoutes(e)
+	hlsMediaController.InitHLSMediaRoutes(e)
+	hlsMediaTestController.InitHLSMediaTestRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
 	initService.InitCache()
 	go initService.InitJob()

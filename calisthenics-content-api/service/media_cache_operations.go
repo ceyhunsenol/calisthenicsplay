@@ -10,7 +10,7 @@ import (
 
 type IMediaCacheOperations interface {
 	SaveCacheMedias() *model.ServiceError
-	SaveCacheMedia(ID string) *cache.MediaCache
+	SaveCacheMedia(ID string) interface{}
 }
 
 type mediaCacheOperations struct {
@@ -60,6 +60,7 @@ func (o *mediaCacheOperations) SaveCacheMedias() *model.ServiceError {
 			mediaCache := cache.MediaCache{
 				ID:                   value.ID,
 				DescriptionMultiLang: codeMultiLang,
+				EncodingID:           value.EncodingID,
 				Active:               true,
 			}
 			activeMedias = append(activeMedias, mediaCache)
@@ -69,7 +70,7 @@ func (o *mediaCacheOperations) SaveCacheMedias() *model.ServiceError {
 	return nil
 }
 
-func (o *mediaCacheOperations) SaveCacheMedia(ID string) *cache.MediaCache {
+func (o *mediaCacheOperations) SaveCacheMedia(ID string) interface{} {
 	o.mediaCacheService.Remove(ID)
 	media, err := o.mediaService.GetByID(ID)
 	if err != nil || !media.Active {
@@ -83,6 +84,7 @@ func (o *mediaCacheOperations) SaveCacheMedia(ID string) *cache.MediaCache {
 
 	mediaCache := cache.MediaCache{
 		ID:                   media.ID,
+		EncodingID:           media.EncodingID,
 		DescriptionMultiLang: nil,
 	}
 	mediaCache.Active = content.Active

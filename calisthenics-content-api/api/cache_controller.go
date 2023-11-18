@@ -1,10 +1,8 @@
 package api
 
 import (
-	"calisthenics-content-api/cache"
 	"calisthenics-content-api/service"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm/utils"
 	"net/http"
 )
 
@@ -15,6 +13,8 @@ type CacheController struct {
 	generalInfoCacheOperations   service.IGeneralInfoCacheOperations
 	contentAccessCacheOperations service.IContentAccessCacheOperations
 	mediaAccessCacheOperations   service.IMediaAccessCacheOperations
+	hlsEncodingCacheOperations   service.IHLSEncodingCacheOperations
+	initService                  service.IInitService
 }
 
 func NewCacheController(mediaCacheOperations service.IMediaCacheOperations,
@@ -23,6 +23,8 @@ func NewCacheController(mediaCacheOperations service.IMediaCacheOperations,
 	generalInfoCacheOperations service.IGeneralInfoCacheOperations,
 	contentAccessCacheOperations service.IContentAccessCacheOperations,
 	mediaAccessCacheOperations service.IMediaAccessCacheOperations,
+	hlsEncodingCacheOperations service.IHLSEncodingCacheOperations,
+	initService service.IInitService,
 ) *CacheController {
 	return &CacheController{
 		mediaCacheOperations:         mediaCacheOperations,
@@ -31,6 +33,8 @@ func NewCacheController(mediaCacheOperations service.IMediaCacheOperations,
 		generalInfoCacheOperations:   generalInfoCacheOperations,
 		contentAccessCacheOperations: contentAccessCacheOperations,
 		mediaAccessCacheOperations:   mediaAccessCacheOperations,
+		hlsEncodingCacheOperations:   hlsEncodingCacheOperations,
+		initService:                  initService,
 	}
 }
 
@@ -43,78 +47,23 @@ func (u *CacheController) InitCacheRoutes(e *echo.Echo) {
 }
 
 func (u *CacheController) RefreshAll(c echo.Context) error {
+
 	cacheTypes := c.QueryParams()["cacheType"]
-	if utils.Contains(cacheTypes, string(cache.Genre)) {
-		serviceError := u.genreCacheOperations.SaveCacheGenres()
+
+	for _, cacheType := range cacheTypes {
+		serviceError := u.initService.CallFromCacheFuncAllByCacheType(cacheType)
 		if serviceError != nil {
 			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 		}
 	}
-	if utils.Contains(cacheTypes, string(cache.Content)) {
-		serviceError := u.contentCacheOperations.SaveCacheContents()
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
-	}
-	if utils.Contains(cacheTypes, string(cache.Media)) {
-		serviceError := u.mediaCacheOperations.SaveCacheMedias()
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
-	}
-	if utils.Contains(cacheTypes, string(cache.GeneralInfo)) {
-		serviceError := u.generalInfoCacheOperations.SaveCacheGeneralInfos()
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
-	}
-	if utils.Contains(cacheTypes, string(cache.ContentAccess)) {
-		serviceError := u.contentAccessCacheOperations.SaveCacheContentAccessList()
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
-	}
-	if utils.Contains(cacheTypes, string(cache.MediaAccess)) {
-		serviceError := u.mediaAccessCacheOperations.SaveCacheMediaAccessList()
-		if serviceError != nil {
-			return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
-		}
-	}
+
 	return c.JSON(http.StatusOK, &MessageResource{Message: "Cached all contents"})
 }
 
 func (u *CacheController) Refresh(c echo.Context) error {
 	cacheType := c.Param("cacheType")
 	id := c.Param("id")
-
-	switch cacheType {
-	case string(cache.Genre):
-		cac := u.genreCacheOperations.SaveCacheGenre(id)
-		return c.JSON(http.StatusOK, cac)
-
-	case string(cache.Content):
-		cac := u.contentCacheOperations.SaveCacheContent(id)
-		return c.JSON(http.StatusOK, cac)
-
-	case string(cache.Media):
-		cac := u.mediaCacheOperations.SaveCacheMedia(id)
-		return c.JSON(http.StatusOK, cac)
-
-	case string(cache.GeneralInfo):
-		cac := u.generalInfoCacheOperations.SaveCacheGeneralInfo(id)
-		return c.JSON(http.StatusOK, cac)
-
-	case string(cache.ContentAccess):
-		cac := u.contentAccessCacheOperations.SaveCacheContentAccess(id)
-		return c.JSON(http.StatusOK, cac)
-
-	case string(cache.MediaAccess):
-		cac := u.mediaAccessCacheOperations.SaveCacheMediaAccess(id)
-		return c.JSON(http.StatusOK, cac)
-
-	default:
-		return c.JSON(http.StatusNotImplemented, &MessageResource{Message: "Not implemented"})
-	}
+	return c.JSON(http.StatusOK, u.initService.CallFromCacheFuncByCacheType(cacheType, id))
 }
 
 func (u *CacheController) RefreshContentWithMedias(c echo.Context) error {

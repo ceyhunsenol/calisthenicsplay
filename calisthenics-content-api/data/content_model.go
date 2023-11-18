@@ -30,4 +30,5 @@ type Media struct {
 	Type            string `json:"type"`
 	ContentID       string `gorm:"foreignKey:ID" json:"content_id"`
 	Active          bool   `json:"active"`
+	EncodingID      string `json:"encoding_id"`
 }

@@ -33,6 +33,7 @@ type MediaCache struct {
 	Type                 string
 	Active               bool
 	ContentID            string
+	EncodingID           string
 }
 
 // GeneralInfoCache cache
@@ -51,6 +52,22 @@ type ContentAccessCache struct {
 type MediaAccessCache struct {
 	MediaID  string
 	Audience string
+}
+
+// HLSEncodingCache cache
+type HLSEncodingCache struct {
+	ID         string
+	LicenseKey string
+	MediaID    string
+	Files      []HLSEncodingFileCache
+}
+
+// HLSEncodingFileCache cache
+type HLSEncodingFileCache struct {
+	FileName   string
+	EncodingID string
+	IV         string
+	Ext        float64
 }
 
 // LimitedCache cache

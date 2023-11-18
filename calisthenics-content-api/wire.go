@@ -16,6 +16,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/labstack/echo/v4"
+	middleware2 "github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -34,6 +35,8 @@ var RepositorySet = wire.NewSet(
 	repository.NewGeneralInfoRepository,
 	repository.NewContentAccessRepository,
 	repository.NewMediaAccessRepository,
+	repository.NewEncodingRepository,
+	repository.NewTranslationRepository,
 )
 
 var DomainServiceSet = wire.NewSet(
@@ -44,6 +47,8 @@ var DomainServiceSet = wire.NewSet(
 	service.NewGeneralInfoService,
 	service.NewContentAccessService,
 	service.NewMediaAccessService,
+	service.NewEncodingService,
+	service.NewTranslationService,
 )
 
 var CacheServiceSet = wire.NewSet(
@@ -54,6 +59,8 @@ var CacheServiceSet = wire.NewSet(
 	cache.NewMediaAccessCacheService,
 	cache.NewContentAccessCacheService,
 	cache.NewLimitedCacheService,
+	cache.NewHLSEncodingCacheService,
+	cache.NewTranslationCacheService,
 )
 
 var ServiceSet = wire.NewSet(
@@ -67,12 +74,18 @@ var ServiceSet = wire.NewSet(
 	service.NewContentAccessCacheOperations,
 	service.NewMediaAccessCacheOperations,
 	service.NewMediaPlayActionService,
+	service.NewHLSEncodingCacheOperations,
+	service.NewHLSMediaService,
+	service.NewParameterService,
+	service.NewTranslationCacheOperations,
 )
 
 var ControllerSet = wire.NewSet(
 	api.NewCacheController,
 	api.NewGenreController,
 	api.NewContentController,
+	api.NewHLSMediaTestController,
+	api.NewHLSMediaController,
 )
 
 func InitializeApp() *echo.Echo {
@@ -99,12 +112,21 @@ func InitRoutes(
 	cacheController *api.CacheController,
 	genreController *api.GenreController,
 	contentController *api.ContentController,
+	hlsMediaController *api.HLSMediaController,
+	hlsMediaTestController *api.HLSMediaTestController,
 	initService service.IInitService,
 ) *echo.Echo {
 	e := echo.New()
+	e.Use(middleware2.Static("/downloads/"))
+	e.GET("/downloads/:file", func(c echo.Context) error {
+		fileName := c.Param("file")
+		return c.Attachment("downloads/"+fileName, fileName)
+	})
 	e.Use(middleware.ServiceContextMiddleware)
 	cacheController.InitCacheRoutes(e)
 	genreController.InitGenreRoutes(e)
+	hlsMediaController.InitHLSMediaRoutes(e)
+	hlsMediaTestController.InitHLSMediaTestRoutes(e)
 	e.Validator = &config.CustomValidator{Validator: validator.New()}
 	initService.InitCache()
 	go initService.InitJob()

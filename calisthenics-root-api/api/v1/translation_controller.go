@@ -8,11 +8,18 @@ import (
 )
 
 type TranslationController struct {
-	translationService service.ITranslationService
+	translationService  service.ITranslationService
+	cacheRequestService service.ICacheRequestService
 }
 
-func NewTranslationController(translationService service.ITranslationService) *TranslationController {
-	return &TranslationController{translationService: translationService}
+func NewTranslationController(
+	translationService service.ITranslationService,
+	cacheRequestService service.ICacheRequestService,
+) *TranslationController {
+	return &TranslationController{
+		translationService:  translationService,
+		cacheRequestService: cacheRequestService,
+	}
 }
 
 func (t *TranslationController) InitTranslationRoutes(e *echo.Group) {
@@ -52,6 +59,12 @@ func (t *TranslationController) SaveTranslation(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation could not be saved."})
 	}
+
+	// content apiye cache icin request atiliyor
+	serviceError := t.cacheRequestService.TranslationRefreshRequest(translation.Code)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
+	}
 	return c.JSON(http.StatusCreated, &MessageResource{Message: "Created."})
 }
 
@@ -80,6 +93,12 @@ func (t *TranslationController) UpdateTranslation(c echo.Context) error {
 	_, err = t.translationService.Update(*translation)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation could not be updated."})
+	}
+
+	// content apiye cache icin request atiliyor
+	serviceError := t.cacheRequestService.TranslationRefreshRequest(translation.Code)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 	return c.JSON(http.StatusOK, &MessageResource{Message: "Updated."})
 }
@@ -126,9 +145,19 @@ func (t *TranslationController) GetTranslation(c echo.Context) error {
 
 func (t *TranslationController) DeleteTranslation(c echo.Context) error {
 	id := c.Param("id")
-	err := t.translationService.Delete(id)
+	translation, err := t.translationService.GetByID(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation not found"})
+	}
+	err = t.translationService.Delete(id)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Translation could not be deleted."})
+	}
+
+	// content apiye cache icin request atiliyor
+	serviceError := t.cacheRequestService.TranslationRefreshRequest(translation.Code)
+	if serviceError != nil && serviceError.Message != "Request error" {
+		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
 	return c.JSON(http.StatusNoContent, nil)
 }
