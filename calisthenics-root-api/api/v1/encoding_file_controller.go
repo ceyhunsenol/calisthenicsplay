@@ -62,8 +62,12 @@ func (ef *EncodingFileController) SaveFiles(c echo.Context) error {
 	if len(extValues) != len(files) {
 		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "ext and file lists must be equal in length"})
 	}
-
 	if files != nil {
+		rootPath, pathError := os.Getwd()
+		if pathError != nil {
+			return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Unknown error"})
+		}
+		cdnDir := filepath.Join(rootPath, "../calisthenics-cdn-api/medias")
 		for _, file := range files {
 			if filepath.Ext(file.Filename) != ".ts" {
 				return c.JSON(http.StatusInternalServerError, &MessageResource{Message: "Just ts file"})
@@ -76,7 +80,7 @@ func (ef *EncodingFileController) SaveFiles(c echo.Context) error {
 			}
 			defer src.Close()
 
-			filePath := filepath.Join("/Users/devexploit/GolandProjects/calisthenicsplay/calisthenics-root-api/downloads/", file.Filename)
+			filePath := filepath.Join(cdnDir, file.Filename)
 
 			dst, fileError := os.Create(filePath)
 			if fileError != nil {
@@ -112,11 +116,22 @@ func (ef *EncodingFileController) SaveFiles(c echo.Context) error {
 	}
 
 	// content apiye cache icin request atiliyor
-	serviceError := ef.cacheRequestService.MediaAccessRefreshRequest(encodingID)
+	serviceError := ef.cacheRequestService.HLSRefreshRequest(encodingID)
 	if serviceError != nil && serviceError.Message != "Request error" {
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
-	return c.JSON(http.StatusOK, savedFiles)
+
+	encodingFileResources := make([]EncodingFileResource, 0)
+	for _, file := range savedFiles {
+		encodingFileResources = append(encodingFileResources, EncodingFileResource{
+			ID:         file.ID,
+			EncodingID: file.EncodingID,
+			FileName:   file.FileName,
+			IV:         file.IV,
+		})
+	}
+
+	return c.JSON(http.StatusOK, encodingFileResources)
 }
 
 func (ef *EncodingFileController) GetEncodingFilesByEncodingID(c echo.Context) error {
@@ -168,7 +183,7 @@ func (ef *EncodingFileController) DeleteEncodingFile(c echo.Context) error {
 	}
 
 	// content apiye cache icin request atiliyor
-	serviceError := ef.cacheRequestService.MediaAccessRefreshRequest(encodingFile.EncodingID)
+	serviceError := ef.cacheRequestService.HLSRefreshRequest(encodingFile.EncodingID)
 	if serviceError != nil && serviceError.Message != "Request error" {
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}
@@ -183,7 +198,7 @@ func (ef *EncodingFileController) DeleteEncodingFilesByEncodingID(c echo.Context
 	}
 
 	// content apiye cache icin request atiliyor
-	serviceError := ef.cacheRequestService.MediaAccessRefreshRequest(id)
+	serviceError := ef.cacheRequestService.HLSRefreshRequest(id)
 	if serviceError != nil && serviceError.Message != "Request error" {
 		return c.JSON(http.StatusInternalServerError, &MessageResource{Message: serviceError.Message})
 	}

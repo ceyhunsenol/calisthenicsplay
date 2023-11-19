@@ -42,6 +42,7 @@ var RepositorySet = wire.NewSet(
 	repository.NewContentAccessRepository,
 	repository.NewMediaAccessRepository,
 	repository.NewEncodingFileRepository,
+	repository.NewGeneralInfoRepository,
 )
 
 var DomainServiceSet = wire.NewSet(
@@ -60,6 +61,7 @@ var DomainServiceSet = wire.NewSet(
 	service.NewContentAccessService,
 	service.NewMediaAccessService,
 	service.NewEncodingFileService,
+	service.NewGeneralInfoService,
 )
 
 var ServiceSet = wire.NewSet(

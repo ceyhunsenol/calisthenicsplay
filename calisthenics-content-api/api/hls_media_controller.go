@@ -29,10 +29,15 @@ func (u *HLSMediaController) InitHLSMediaRoutes(e *echo.Echo) {
 
 func (u *HLSMediaController) GetMasterPlaylist(c echo.Context) error {
 	token := c.QueryParam("t")
+	context, _ := middleware.GetServiceContextByEchoContext(c)
 	if token == "" {
 		return c.JSON(http.StatusBadRequest, &MessageResource{Message: "Token required"})
 	}
-	playlist, err := u.hlsMediaService.GetMasterPlaylist(token)
+	validationRequest := model.TokenValidationRequest{
+		UserAgent: context.UserAgent,
+		CallerIP:  context.CallerIP,
+	}
+	playlist, err := u.hlsMediaService.GetMasterPlaylist(token, validationRequest)
 	if err != nil {
 		return c.JSON(err.Code, &MessageResource{Message: err.Message})
 	}
@@ -41,12 +46,17 @@ func (u *HLSMediaController) GetMasterPlaylist(c echo.Context) error {
 
 func (u *HLSMediaController) GetMediaPlaylist(c echo.Context) error {
 	id := c.Param("id")
+	context, _ := middleware.GetServiceContextByEchoContext(c)
 	token := c.QueryParam("t")
 	request := model.VideoPlaylistRequest{
 		Resolution: id,
 		Token:      token,
 	}
-	playlist, err := u.hlsMediaService.GetMediaPlaylist(request)
+	validationRequest := model.TokenValidationRequest{
+		UserAgent: context.UserAgent,
+		CallerIP:  context.CallerIP,
+	}
+	playlist, err := u.hlsMediaService.GetMediaPlaylist(request, validationRequest)
 	if err != nil {
 		return c.JSON(err.Code, &MessageResource{Message: err.Message})
 	}
@@ -55,7 +65,12 @@ func (u *HLSMediaController) GetMediaPlaylist(c echo.Context) error {
 
 func (u *HLSMediaController) GetLicenseKey(c echo.Context) error {
 	token := c.QueryParam("t")
-	licenseKey, serviceError := u.hlsMediaService.GetLicenseKey(token)
+	context, _ := middleware.GetServiceContextByEchoContext(c)
+	validationRequest := model.TokenValidationRequest{
+		UserAgent: context.UserAgent,
+		CallerIP:  context.CallerIP,
+	}
+	licenseKey, serviceError := u.hlsMediaService.GetLicenseKey(token, validationRequest)
 	if serviceError != nil {
 		return c.JSON(serviceError.Code, &MessageResource{Message: serviceError.Message})
 	}

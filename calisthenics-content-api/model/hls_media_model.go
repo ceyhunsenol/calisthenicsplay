@@ -34,3 +34,8 @@ type HLSMediaTokenModel struct {
 	PlatformType string
 	Host         string
 }
+
+type TokenValidationRequest struct {
+	UserAgent string
+	CallerIP  string
+}

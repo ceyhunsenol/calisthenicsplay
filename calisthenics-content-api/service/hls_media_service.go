@@ -24,10 +24,10 @@ type Resolution struct {
 
 type IHLSMediaService interface {
 	GetResolutions() []Resolution
-	GetMasterPlaylist(t string) (string, *model.ServiceError)
-	GetMediaPlaylist(request model.VideoPlaylistRequest) (string, *model.ServiceError)
+	GetMasterPlaylist(t string, validationRequest model.TokenValidationRequest) (string, *model.ServiceError)
+	GetMediaPlaylist(request model.VideoPlaylistRequest, validationRequest model.TokenValidationRequest) (string, *model.ServiceError)
 	GetMediaURL(request model.VideoURLRequest) (model.VideoURLModel, *model.ServiceError)
-	GetLicenseKey(token string) (string, *model.ServiceError)
+	GetLicenseKey(token string, validationRequest model.TokenValidationRequest) (string, *model.ServiceError)
 }
 
 type hlSMediaService struct {
@@ -60,6 +60,13 @@ func NewHLSMediaService(
 	}
 }
 
+func (s *hlSMediaService) checkMediaRequester(tokenModel model.HLSMediaTokenModel, validationRequest model.TokenValidationRequest) bool {
+	if tokenModel.UserAgent != validationRequest.UserAgent || tokenModel.CallerIP != validationRequest.CallerIP {
+		return false
+	}
+	return true
+}
+
 func (s *hlSMediaService) createHLSToken(key []byte, footer interface{}) (string, *model.ServiceError) {
 	v2 := paseto.NewV2()
 	payload := paseto.JSONToken{
@@ -88,12 +95,17 @@ func (s *hlSMediaService) getHLSMediaTokenModel(key []byte, token string) (model
 	return hlsToken, nil
 }
 
-func (s *hlSMediaService) GetMasterPlaylist(t string) (string, *model.ServiceError) {
+func (s *hlSMediaService) GetMasterPlaylist(t string, validationRequest model.TokenValidationRequest) (string, *model.ServiceError) {
 	key := []byte(s.hlsMediaToken)
-	_, err := s.getHLSMediaTokenModel(key, t)
+	tokenModel, err := s.getHLSMediaTokenModel(key, t)
 	if err != nil {
 		return "", err
 	}
+
+	if !s.checkMediaRequester(tokenModel, validationRequest) {
+		return "", &model.ServiceError{Code: http.StatusBadRequest, Message: "Token not valid"}
+	}
+
 	playlistContent := "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-INDEPENDENT-SEGMENTS\n"
 	playlistPath, playlistError := s.parameterService.GetHLSPlaylistPath()
 	if playlistError != nil {
@@ -109,11 +121,15 @@ func (s *hlSMediaService) GetMasterPlaylist(t string) (string, *model.ServiceErr
 	return playlistContent, nil
 }
 
-func (s *hlSMediaService) GetMediaPlaylist(request model.VideoPlaylistRequest) (string, *model.ServiceError) {
+func (s *hlSMediaService) GetMediaPlaylist(request model.VideoPlaylistRequest, validationRequest model.TokenValidationRequest) (string, *model.ServiceError) {
 	key := []byte(s.hlsMediaToken)
 	tokenModel, serviceError := s.getHLSMediaTokenModel(key, request.Token)
 	if serviceError != nil {
 		return "", serviceError
+	}
+
+	if !s.checkMediaRequester(tokenModel, validationRequest) {
+		return "", &model.ServiceError{Code: http.StatusBadRequest, Message: "Token not valid"}
 	}
 
 	re := regexp.MustCompile(`(\d+)\.m3u8`)
@@ -169,7 +185,7 @@ func (s *hlSMediaService) GetMediaPlaylist(request model.VideoPlaylistRequest) (
 		if i == 0 {
 			builder.WriteString("#EXT-X-DISCONTINUITY\n")
 		}
-		builder.WriteString(fmt.Sprintf("#EXTINF:%.2f,\n", 10.0))
+		builder.WriteString(fmt.Sprintf("#EXTINF:%.2f,\n", file.Ext))
 		builder.WriteString(fmt.Sprintf("#EXT-X-KEY:METHOD=%s,URI=\"%s\",IV=%s\n", "AES-128", tokenModel.Host+licenseURL+"?t="+request.Token, file.IV))
 		builder.WriteString(url + "/" + file.FileName + "\n")
 	}
@@ -184,7 +200,11 @@ func (s *hlSMediaService) GetMediaURL(request model.VideoURLRequest) (model.Vide
 	if err != nil {
 		return model.VideoURLModel{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Media not found"}
 	}
-	action := s.mediaPlayActionService.GetPlayAction(request.Token, mediaCache)
+	actionRequest := model.PlayActionRequest{
+		Token:    request.Token,
+		LangCode: request.LangCode,
+	}
+	action := s.mediaPlayActionService.GetPlayAction(actionRequest, mediaCache)
 	if action.ActionType != config.Watch {
 		return model.VideoURLModel{}, &model.ServiceError{Code: http.StatusNotFound, Message: "Media cannot be accessed"}
 	}
@@ -234,11 +254,15 @@ func (s *hlSMediaService) GetResolutions() []Resolution {
 	return s.resolutions
 }
 
-func (s *hlSMediaService) GetLicenseKey(token string) (string, *model.ServiceError) {
+func (s *hlSMediaService) GetLicenseKey(token string, validationRequest model.TokenValidationRequest) (string, *model.ServiceError) {
 	key := []byte(s.hlsMediaToken)
 	tokenModel, serviceError := s.getHLSMediaTokenModel(key, token)
 	if serviceError != nil {
 		return "", serviceError
+	}
+
+	if !s.checkMediaRequester(tokenModel, validationRequest) {
+		return "", &model.ServiceError{Code: http.StatusBadRequest, Message: "Token not valid"}
 	}
 
 	encodingCache, err := s.encodingCacheService.GetByID(tokenModel.EncodingID)

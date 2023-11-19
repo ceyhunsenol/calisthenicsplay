@@ -70,7 +70,7 @@ func InitializeApp() *echo.Echo {
 	genreController := v1.NewGenreController(iGenreContentOperations, iGenreService, iContentTranslationOperations, db, iCacheRequestService)
 	iTranslationRepository := repository.NewTranslationRepository(db)
 	iTranslationService := service.NewTranslationService(iTranslationRepository)
-	translationController := v1.NewTranslationController(iTranslationService)
+	translationController := v1.NewTranslationController(iTranslationService, iCacheRequestService)
 	contentTranslationController := v1.NewContentTranslationController(iContentTranslationService)
 	contentAccessController := v1.NewContentAccessController(iContentAccessService, iCacheRequestService)
 	mediaAccessController := v1.NewMediaAccessController(iMediaAccessService, iCacheRequestService)
@@ -87,9 +87,9 @@ var GeneralSet = wire.NewSet(NewDatabase, InitRoutes)
 
 var IntegrationSet = wire.NewSet(calisthenics.NewCalisthenicsContentService)
 
-var RepositorySet = wire.NewSet(repository.NewUserRepository, repository.NewPrivilegeRepository, repository.NewRoleRepository, repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreTypeRepository, repository.NewGenreRepository, repository.NewHelperContentRepository, repository.NewRequirementContentRepository, repository.NewGenreContentRepository, repository.NewTranslationRepository, repository.NewContentTranslationRepository, repository.NewContentAccessRepository, repository.NewMediaAccessRepository, repository.NewEncodingFileRepository)
+var RepositorySet = wire.NewSet(repository.NewUserRepository, repository.NewPrivilegeRepository, repository.NewRoleRepository, repository.NewContentRepository, repository.NewMediaRepository, repository.NewGenreTypeRepository, repository.NewGenreRepository, repository.NewHelperContentRepository, repository.NewRequirementContentRepository, repository.NewGenreContentRepository, repository.NewTranslationRepository, repository.NewContentTranslationRepository, repository.NewContentAccessRepository, repository.NewMediaAccessRepository, repository.NewEncodingFileRepository, repository.NewGeneralInfoRepository)
 
-var DomainServiceSet = wire.NewSet(service.NewUserService, service.NewPrivilegeService, service.NewRoleService, service.NewContentService, service.NewMediaService, service.NewHelperContentService, service.NewRequirementContentService, service.NewGenreTypeService, service.NewGenreService, service.NewGenreContentService, service.NewTranslationService, service.NewContentTranslationService, service.NewContentAccessService, service.NewMediaAccessService, service.NewEncodingFileService)
+var DomainServiceSet = wire.NewSet(service.NewUserService, service.NewPrivilegeService, service.NewRoleService, service.NewContentService, service.NewMediaService, service.NewHelperContentService, service.NewRequirementContentService, service.NewGenreTypeService, service.NewGenreService, service.NewGenreContentService, service.NewTranslationService, service.NewContentTranslationService, service.NewContentAccessService, service.NewMediaAccessService, service.NewEncodingFileService, service.NewGeneralInfoService)
 
 var ServiceSet = wire.NewSet(service.NewAuthService, service.NewHelperContentOperations, service.NewRequirementContentOperations, service.NewGenreContentOperations, service.NewContentTranslationOperations, service.NewCacheRequestService)
 
